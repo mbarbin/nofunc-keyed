@@ -13,6 +13,8 @@
 (*                                                                        *)
 (**************************************************************************)
 
+[@@@warning "-9"]
+
 (* Sets over ordered types *)
 
 module type OrderedType = sig
