@@ -32,3 +32,13 @@ The first step was to initiate the part of the repository that relates to the
 
    Note that starting from this stage, the tree won't build for a few commits,
    which is done intentionally in order to make the history of edits more clear.
+
+7. This step is completely deterministic however may appear difficult to review
+   based on the raw diff. The principle is to replace any occurrence of
+   `Ord.compare` by `compare` function introduced as an additional argument to
+   the current functoin, and then propagate the argument where needed.
+
+   To avoid using `Stdlib.compare` by accident, we shadow this function at the
+   beginning of the file.
+
+   From that commit, the tree builds again.
