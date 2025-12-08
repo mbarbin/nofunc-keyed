@@ -92,7 +92,6 @@ module type S = sig
   val of_seq : (key * 'a) Seq.t -> 'a t
 end
 
-module Make (Ord : OrderedType) = struct
   type key = Ord.t
   type 'a t = Empty | Node of { l : 'a t; v : key; d : 'a; r : 'a t; h : int }
 
@@ -513,4 +512,3 @@ module Make (Ord : OrderedType) = struct
         end
     in
     seq_of_enum_ (aux low m End)
-end

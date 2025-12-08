@@ -72,10 +72,6 @@ module type OrderedType = sig
       {!Stdlib.compare}. *)
 end
 
-(** Output signature of the functor {!Make}. *)
-module type S = sig
-  (** {1:maps Maps} *)
-
   type key
   (** The type of the map keys. *)
 
@@ -354,8 +350,3 @@ module type S = sig
   val of_seq : (key * 'a) Seq.t -> 'a t
   (** Build a map from the given bindings
       @since 4.07 *)
-end
-
-(** Functor building an implementation of the map structure given a totally
-    ordered type. *)
-module Make (Ord : OrderedType) : S with type key = Ord.t
