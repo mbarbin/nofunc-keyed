@@ -34,14 +34,20 @@
 
 (** In the context of the [nofunc] project, this file serves as an internal
     building block and is not meant to be facing the user. Every function that
-    needs access to the [compare] function takes it as additional argument. *)
+    needs access to the [compare] function takes it as additional argument.
+
+    To keep the existing naming conventions used in the comments, we denote by
+    [Ord.compare] the ordering used to build the maps. In practice, [Ord] can be
+    any module that respects the required interface.
+
+    For example: [Map.add ~compare:String.compare elt data map]. *)
 
 type 'key compare = 'key -> 'key -> int
 (** A total ordering function over the keys. This is a two-argument function [f]
     such that [f e1 e2] is zero if the keys [e1] and [e2] are equal, [f e1 e2]
     is strictly negative if [e1] is smaller than [e2], and [f e1 e2] is strictly
     positive if [e1] is greater than [e2]. Example: a suitable ordering function
-    is the generic structural comparison function {!Stdlib.compare}. *)
+    is the generic structural comparison function [Stdlib.compare]. *)
 
 type ('key, !+'a) t
 (** The type of maps from type ['key] to type ['a]. *)
@@ -130,7 +136,7 @@ val cardinal : ('key, 'a) t -> int
 val bindings : ('key, 'a) t -> ('key * 'a) list
 (** Return the list of all bindings of the given map. The returned list is
     sorted in increasing order of keys with respect to the ordering
-    [Ord.compare], where [Ord] is the argument given to {!Map.Make}.
+    [Ord.compare] used to build the map.
     @since 3.12 *)
 
 val min_binding : ('key, 'a) t -> 'key * 'a
@@ -319,7 +325,7 @@ val exists : ('key -> 'a -> bool) -> ('key, 'a) t -> bool
 (** {1:converting Converting} *)
 
 val to_list : ('key, 'a) t -> ('key * 'a) list
-(** [to_list m] is {!bindings}[ m].
+(** [to_list m] is {!val:bindings}[ m].
     @since 5.1 *)
 
 val of_list : compare:'key compare -> ('key * 'a) list -> ('key, 'a) t

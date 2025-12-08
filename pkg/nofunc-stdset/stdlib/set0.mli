@@ -34,7 +34,13 @@
 
 (** In the context of the [nofunc] project, this file serves as an internal
     building block and is not meant to be facing the user. Every function that
-    needs access to the [compare] function takes it as additional argument. *)
+    needs access to the [compare] function takes it as additional argument.
+
+    To keep the existing naming conventions used in the comments, we denote by
+    [Ord.compare] the ordering used to build the sets. In practice, [Ord] can be
+    any module that respects the required interface.
+
+    For example: [Set.add ~compare:String.compare e s]. *)
 
 type 'elt compare = 'elt -> 'elt -> int
 (** A total ordering function over the set elements. This is a two-argument
@@ -42,7 +48,7 @@ type 'elt compare = 'elt -> 'elt -> int
     equal, [f e1 e2] is strictly negative if [e1] is smaller than [e2], and
     [f e1 e2] is strictly positive if [e1] is greater than [e2]. Example: a
     suitable ordering function is the generic structural comparison function
-    {!Stdlib.compare}. *)
+    [Stdlib.compare]. *)
 
 type 'elt t
 (** The type of sets of elements of type ['elt]. *)
@@ -86,8 +92,7 @@ val cardinal : 'elt t -> int
 
 val elements : 'elt t -> 'elt list
 (** Return the list of all elements of the given set. The returned list is
-    sorted in increasing order with respect to the ordering [Ord.compare], where
-    [Ord] is the argument given to {!Set.Make}. *)
+    sorted in increasing order with respect to the ordering [Ord.compare]. *)
 
 val min_elt : 'elt t -> 'elt
 (** Return the smallest element of the given set (with respect to the
@@ -252,7 +257,7 @@ val exists : ('elt -> bool) -> 'elt t -> bool
 (** {1:converting Converting} *)
 
 val to_list : 'elt t -> 'elt list
-(** [to_list s] is {!elements}[ s].
+(** [to_list s] is {!val:elements}[ s].
     @since 5.1 *)
 
 val of_list : compare:'elt compare -> 'elt list -> 'elt t
