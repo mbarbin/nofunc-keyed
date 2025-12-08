@@ -14,7 +14,10 @@
 
   - format with ocamlformat
 
-  - disable warning 9 via directive *)
+  - disable warning 9 via directive
+
+  - Remove the functor and signature. Make the type parametrized by the type of
+  elements. Require [compare] everywhere needed. *)
 
 (**************************************************************************)
 (*                                                                        *)
@@ -33,67 +36,17 @@
 
 [@@@warning "-9"]
 
-module type OrderedType = sig
-  type t
+(* To avoid using [Stdlib.compare] by accident, we shadow the function [compare]
+   in this file. The variable [compare] may only be used when brought to scope
+   as a function argument. *)
+let compare = `shadow_stdlib_compare
+let _ = compare
 
-  val compare : t -> t -> int
-end
+type 'key compare = 'key -> 'key -> int
 
-module type S = sig
-  type key
-  type !+'a t
-
-  val empty : 'a t
-  val add : key -> 'a -> 'a t -> 'a t
-  val add_to_list : key -> 'a -> 'a list t -> 'a list t
-  val update : key -> ('a option -> 'a option) -> 'a t -> 'a t
-  val singleton : key -> 'a -> 'a t
-  val remove : key -> 'a t -> 'a t
-
-  val merge :
-    (key -> 'a option -> 'b option -> 'c option) -> 'a t -> 'b t -> 'c t
-
-  val union : (key -> 'a -> 'a -> 'a option) -> 'a t -> 'a t -> 'a t
-  val cardinal : 'a t -> int
-  val bindings : 'a t -> (key * 'a) list
-  val min_binding : 'a t -> key * 'a
-  val min_binding_opt : 'a t -> (key * 'a) option
-  val max_binding : 'a t -> key * 'a
-  val max_binding_opt : 'a t -> (key * 'a) option
-  val choose : 'a t -> key * 'a
-  val choose_opt : 'a t -> (key * 'a) option
-  val find : key -> 'a t -> 'a
-  val find_opt : key -> 'a t -> 'a option
-  val find_first : (key -> bool) -> 'a t -> key * 'a
-  val find_first_opt : (key -> bool) -> 'a t -> (key * 'a) option
-  val find_last : (key -> bool) -> 'a t -> key * 'a
-  val find_last_opt : (key -> bool) -> 'a t -> (key * 'a) option
-  val iter : (key -> 'a -> unit) -> 'a t -> unit
-  val fold : (key -> 'a -> 'b -> 'b) -> 'a t -> 'b -> 'b
-  val map : ('a -> 'b) -> 'a t -> 'b t
-  val mapi : (key -> 'a -> 'b) -> 'a t -> 'b t
-  val filter : (key -> 'a -> bool) -> 'a t -> 'a t
-  val filter_map : (key -> 'a -> 'b option) -> 'a t -> 'b t
-  val partition : (key -> 'a -> bool) -> 'a t -> 'a t * 'a t
-  val split : key -> 'a t -> 'a t * 'a option * 'a t
-  val is_empty : 'a t -> bool
-  val is_singleton : 'a t -> bool
-  val mem : key -> 'a t -> bool
-  val equal : ('a -> 'a -> bool) -> 'a t -> 'a t -> bool
-  val compare : ('a -> 'a -> int) -> 'a t -> 'a t -> int
-  val for_all : (key -> 'a -> bool) -> 'a t -> bool
-  val exists : (key -> 'a -> bool) -> 'a t -> bool
-  val to_list : 'a t -> (key * 'a) list
-  val of_list : (key * 'a) list -> 'a t
-  val to_seq : 'a t -> (key * 'a) Seq.t
-  val to_rev_seq : 'a t -> (key * 'a) Seq.t
-  val to_seq_from : key -> 'a t -> (key * 'a) Seq.t
-  val add_seq : (key * 'a) Seq.t -> 'a t -> 'a t
-  val of_seq : (key * 'a) Seq.t -> 'a t
-end
-
-type key = Ord.t
-type 'a t = Empty | Node of { l : 'a t; v : key; d : 'a; r : 'a t; h : int }
+type ('key, 'a) t =
+  | Empty
+  | Node of { l : ('key, 'a) t; v : 'key; d : 'a; r : ('key, 'a) t; h : int }
 
 let height = function Empty -> 0 | Node { h } -> h
 
@@ -139,23 +92,23 @@ let is_singleton = function
   | Node { l = Empty; r = Empty } -> true
   | Empty | Node _ -> false
 
-let rec add x data = function
+let rec add ~compare x data = function
   | Empty -> Node { l = Empty; v = x; d = data; r = Empty; h = 1 }
   | Node { l; v; d; r; h } as m ->
-      let c = Ord.compare x v in
+      let c = compare x v in
       if c = 0 then if d == data then m else Node { l; v = x; d = data; r; h }
       else if c < 0 then
-        let ll = add x data l in
+        let ll = add ~compare x data l in
         if l == ll then m else bal ll v d r
       else
-        let rr = add x data r in
+        let rr = add ~compare x data r in
         if r == rr then m else bal l v d rr
 
-let rec find x = function
+let rec find ~compare x = function
   | Empty -> raise Not_found
   | Node { l; v; d; r } ->
-      let c = Ord.compare x v in
-      if c = 0 then d else find x (if c < 0 then l else r)
+      let c = compare x v in
+      if c = 0 then d else find ~compare x (if c < 0 then l else r)
 
 let rec find_first_aux v0 d0 f = function
   | Empty -> (v0, d0)
@@ -196,17 +149,17 @@ let rec find_last_opt f = function
   | Node { l; v; d; r } ->
       if f v then find_last_opt_aux v d f r else find_last_opt f l
 
-let rec find_opt x = function
+let rec find_opt ~compare x = function
   | Empty -> None
   | Node { l; v; d; r } ->
-      let c = Ord.compare x v in
-      if c = 0 then Some d else find_opt x (if c < 0 then l else r)
+      let c = compare x v in
+      if c = 0 then Some d else find_opt ~compare x (if c < 0 then l else r)
 
-let rec mem x = function
+let rec mem ~compare x = function
   | Empty -> false
   | Node { l; v; r } ->
-      let c = Ord.compare x v in
-      c = 0 || mem x (if c < 0 then l else r)
+      let c = compare x v in
+      c = 0 || mem ~compare x (if c < 0 then l else r)
 
 let rec min_binding = function
   | Empty -> raise Not_found
@@ -241,26 +194,26 @@ let merge t1 t2 =
       let x, d = min_binding t2 in
       bal t1 x d (remove_min_binding t2)
 
-let rec remove x = function
+let rec remove ~compare x = function
   | Empty -> Empty
   | Node { l; v; d; r } as m ->
-      let c = Ord.compare x v in
+      let c = compare x v in
       if c = 0 then merge l r
       else if c < 0 then
-        let ll = remove x l in
+        let ll = remove ~compare x l in
         if l == ll then m else bal ll v d r
       else
-        let rr = remove x r in
+        let rr = remove ~compare x r in
         if r == rr then m else bal l v d rr
 
-let rec update x f = function
+let rec update ~compare x f = function
   | Empty -> begin
       match f None with
       | None -> Empty
       | Some data -> Node { l = Empty; v = x; d = data; r = Empty; h = 1 }
     end
   | Node { l; v; d; r; h } as m ->
-      let c = Ord.compare x v in
+      let c = compare x v in
       if c = 0 then begin
         match f (Some d) with
         | None -> merge l r
@@ -268,15 +221,15 @@ let rec update x f = function
             if d == data then m else Node { l; v = x; d = data; r; h }
       end
       else if c < 0 then
-        let ll = update x f l in
+        let ll = update ~compare x f l in
         if l == ll then m else bal ll v d r
       else
-        let rr = update x f r in
+        let rr = update ~compare x f r in
         if r == rr then m else bal l v d rr
 
-let add_to_list x data m =
+let add_to_list ~compare x data m =
   let add = function None -> Some [ data ] | Some l -> Some (data :: l) in
-  update x add m
+  update ~compare x add m
 
 let rec iter f = function
   | Empty -> ()
@@ -356,43 +309,45 @@ let concat t1 t2 =
 let concat_or_join t1 v d t2 =
   match d with Some d -> join t1 v d t2 | None -> concat t1 t2
 
-let rec split x = function
+let rec split ~compare x = function
   | Empty -> (Empty, None, Empty)
   | Node { l; v; d; r } ->
-      let c = Ord.compare x v in
+      let c = compare x v in
       if c = 0 then (l, Some d, r)
       else if c < 0 then
-        let ll, pres, rl = split x l in
+        let ll, pres, rl = split ~compare x l in
         (ll, pres, join rl v d r)
       else
-        let lr, pres, rr = split x r in
+        let lr, pres, rr = split ~compare x r in
         (join l v d lr, pres, rr)
 
-let rec merge f s1 s2 =
+let rec merge ~compare f s1 s2 =
   match (s1, s2) with
   | Empty, Empty -> Empty
   | Node { l = l1; v = v1; d = d1; r = r1; h = h1 }, _ when h1 >= height s2 ->
-      let l2, d2, r2 = split v1 s2 in
-      concat_or_join (merge f l1 l2) v1 (f v1 (Some d1) d2) (merge f r1 r2)
+      let l2, d2, r2 = split ~compare v1 s2 in
+      concat_or_join (merge ~compare f l1 l2) v1 (f v1 (Some d1) d2)
+        (merge ~compare f r1 r2)
   | _, Node { l = l2; v = v2; d = d2; r = r2 } ->
-      let l1, d1, r1 = split v2 s1 in
-      concat_or_join (merge f l1 l2) v2 (f v2 d1 (Some d2)) (merge f r1 r2)
+      let l1, d1, r1 = split ~compare v2 s1 in
+      concat_or_join (merge ~compare f l1 l2) v2 (f v2 d1 (Some d2))
+        (merge ~compare f r1 r2)
   | _ -> assert false
 
-let rec union f s1 s2 =
+let rec union ~compare f s1 s2 =
   match (s1, s2) with
   | Empty, s | s, Empty -> s
   | ( Node { l = l1; v = v1; d = d1; r = r1; h = h1 },
       Node { l = l2; v = v2; d = d2; r = r2; h = h2 } ) -> (
       if h1 >= h2 then
-        let l2, d2, r2 = split v1 s2 in
-        let l = union f l1 l2 and r = union f r1 r2 in
+        let l2, d2, r2 = split ~compare v1 s2 in
+        let l = union ~compare f l1 l2 and r = union ~compare f r1 r2 in
         match d2 with
         | None -> join l v1 d1 r
         | Some d2 -> concat_or_join l v1 (f v1 d1 d2) r
       else
-        let l1, d1, r1 = split v2 s1 in
-        let l = union f l1 l2 and r = union f r1 r2 in
+        let l1, d1, r1 = split ~compare v2 s1 in
+        let l = union ~compare f l1 l2 and r = union ~compare f r1 r2 in
         match d1 with
         | None -> join l v2 d2 r
         | Some d1 -> concat_or_join l v2 (f v2 d1 d2) r)
@@ -427,21 +382,23 @@ let rec partition p = function
       if pvd then (join lt v d rt, concat lf rf)
       else (concat lt rt, join lf v d rf)
 
-type 'a enumeration = End | More of key * 'a * 'a t * 'a enumeration
+type ('key, 'a) enumeration =
+  | End
+  | More of 'key * 'a * ('key, 'a) t * ('key, 'a) enumeration
 
 let rec cons_enum m e =
   match m with
   | Empty -> e
   | Node { l; v; d; r } -> cons_enum l (More (v, d, r, e))
 
-let compare cmp m1 m2 =
+let compare ~compare:cmp_key cmp m1 m2 =
   let rec compare_aux e1 e2 =
     match (e1, e2) with
     | End, End -> 0
     | End, _ -> -1
     | _, End -> 1
     | More (v1, d1, r1, e1), More (v2, d2, r2, e2) ->
-        let c = Ord.compare v1 v2 in
+        let c = cmp_key v1 v2 in
         if c <> 0 then c
         else
           let c = cmp d1 d2 in
@@ -449,14 +406,14 @@ let compare cmp m1 m2 =
   in
   compare_aux (cons_enum m1 End) (cons_enum m2 End)
 
-let equal cmp m1 m2 =
+let equal ~compare:cmp_key cmp m1 m2 =
   let rec equal_aux e1 e2 =
     match (e1, e2) with
     | End, End -> true
     | End, _ -> false
     | _, End -> false
     | More (v1, d1, r1, e1), More (v2, d2, r2, e2) ->
-        Ord.compare v1 v2 = 0
+        cmp_key v1 v2 = 0
         && cmp d1 d2
         && equal_aux (cons_enum r1 e1) (cons_enum r2 e2)
   in
@@ -474,9 +431,14 @@ let bindings s = bindings_aux [] s
 let choose = min_binding
 let choose_opt = min_binding_opt
 let to_list = bindings
-let of_list bs = List.fold_left (fun m (k, v) -> add k v m) empty bs
-let add_seq i m = Seq.fold_left (fun m (k, v) -> add k v m) m i
-let of_seq i = add_seq i empty
+
+let of_list ~compare bs =
+  List.fold_left (fun m (k, v) -> add ~compare k v m) empty bs
+
+let add_seq ~compare i m =
+  Seq.fold_left (fun m (k, v) -> add ~compare k v m) m i
+
+let of_seq ~compare i = add_seq ~compare i empty
 
 let rec seq_of_enum_ c () =
   match c with
@@ -498,15 +460,15 @@ let rec rev_seq_of_enum_ c () =
 
 let to_rev_seq c = rev_seq_of_enum_ (snoc_enum c End)
 
-let to_seq_from low m =
-  let rec aux low m c =
+let to_seq_from ~compare low m =
+  let rec aux ~compare low m c =
     match m with
     | Empty -> c
     | Node { l; v; d; r; _ } -> begin
-        match Ord.compare v low with
+        match compare v low with
         | 0 -> More (v, d, r, c)
-        | n when n < 0 -> aux low r c
-        | _ -> aux low l (More (v, d, r, c))
+        | n when n < 0 -> aux ~compare low r c
+        | _ -> aux ~compare low l (More (v, d, r, c))
       end
   in
-  seq_of_enum_ (aux low m End)
+  seq_of_enum_ (aux ~compare low m End)
