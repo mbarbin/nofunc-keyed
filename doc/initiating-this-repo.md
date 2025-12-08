@@ -33,10 +33,10 @@ The first step was to initiate the part of the repository that relates to the
    Note that starting from this stage, the tree won't build for a few commits,
    which is done intentionally in order to make the history of edits more clear.
 
-7. This step is completely deterministic however may appear difficult to review
+7. This step is mostly deterministic however may appear difficult to review
    based on the raw diff. The principle is to replace any occurrence of
    `Ord.compare` by `compare` function introduced as an additional argument to
-   the current functoin, and then propagate the argument where needed.
+   the current function, and then propagate the argument where needed.
 
    To avoid using `Stdlib.compare` by accident, we shadow this function at the
    beginning of the file.
@@ -45,3 +45,6 @@ The first step was to initiate the part of the repository that relates to the
 
 8. Repeat step 6 for the map module. Removed the functor and reindent. The tree
    won't build at this commit.
+
+9. Repeat step 7 for the map module. Propagate `compare` arguments and fix
+   the build.
