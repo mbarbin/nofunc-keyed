@@ -42,3 +42,6 @@ The first step was to initiate the part of the repository that relates to the
    beginning of the file.
 
    From that commit, the tree builds again.
+
+8. Repeat step 6 for the map module. Removed the functor and reindent. The tree
+   won't build at this commit.
