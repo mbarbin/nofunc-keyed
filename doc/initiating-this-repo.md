@@ -26,3 +26,9 @@ The first step was to initiate the part of the repository that relates to the
 4. Silence warnings 9 and build the repo.
 
 5. Add project license headers - initiate notices for changes to imported files.
+
+6. Removed the functor from the set ml and mli and let ocamlformat reindent the
+   contents of the files at toplevel.
+
+   Note that starting from this stage, the tree won't build for a few commits,
+   which is done intentionally in order to make the history of edits more clear.
