@@ -72,10 +72,6 @@ module type OrderedType = sig
       {!Stdlib.compare}. *)
 end
 
-(** Output signature of the functor {!Make}. *)
-module type S = sig
-  (** {1:sets Sets} *)
-
   type elt
   (** The type of the set elements. *)
 
@@ -315,8 +311,3 @@ module type S = sig
   val of_seq : elt Seq.t -> t
   (** Build a set from the given bindings
       @since 4.07 *)
-end
-
-(** Functor building an implementation of the set structure given a totally
-    ordered type. *)
-module Make (Ord : OrderedType) : S with type elt = Ord.t

@@ -91,7 +91,6 @@ module type S = sig
   val of_seq : elt Seq.t -> t
 end
 
-module Make (Ord : OrderedType) = struct
   type elt = Ord.t
   type t = Empty | Node of { l : t; v : elt; r : t; h : int }
 
@@ -588,4 +587,3 @@ module Make (Ord : OrderedType) = struct
         end
     in
     seq_of_enum_ (aux low s End)
-end
