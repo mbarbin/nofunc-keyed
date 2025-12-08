@@ -1,0 +1,4 @@
+(library
+ (name nofunc_stdmap)
+ (public_name nofunc-stdmap)
+ (libraries nofunc-stdmap.stdlib))

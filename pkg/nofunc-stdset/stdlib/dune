@@ -1,0 +1,3 @@
+(library
+ (name nofunc_stdset_stdlib)
+ (public_name nofunc-stdset.stdlib))
