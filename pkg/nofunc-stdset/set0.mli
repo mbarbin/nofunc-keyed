@@ -76,21 +76,21 @@ val singleton : (module OrderedType with type t = 'elt) -> 'elt -> 'elt t
     then physically equal to [s]). *)
 val remove : 'elt -> 'elt t -> 'elt t
 
-(** Set union.
-    @raise Invalid_argument if the sets have different compare functions. *)
+(** Set union. Raise [Invalid_argument] if the sets have different compare
+    functions. *)
 val union : 'elt t -> 'elt t -> 'elt t
 
-(** Set intersection.
-    @raise Invalid_argument if the sets have different compare functions. *)
+(** Set intersection. Raise [Invalid_argument] if the sets have different
+    compare functions. *)
 val inter : 'elt t -> 'elt t -> 'elt t
 
-(** Test if two sets are disjoint.
-    @raise Invalid_argument if the sets have different compare functions. *)
+(** Test if two sets are disjoint. Raise [Invalid_argument] if the sets have
+    different compare functions. *)
 val disjoint : 'elt t -> 'elt t -> bool
 
 (** Set difference: [diff s1 s2] contains the elements of [s1] that are not in
-    [s2].
-    @raise Invalid_argument if the sets have different compare functions. *)
+    [s2]. Raise [Invalid_argument] if the sets have different compare
+    functions. *)
 val diff : 'elt t -> 'elt t -> 'elt t
 
 (** Return the number of elements of a set. *)
@@ -231,17 +231,17 @@ val is_singleton : _ t -> bool
 val mem : 'elt -> 'elt t -> bool
 
 (** [equal s1 s2] tests whether the sets [s1] and [s2] are equal, that is,
-    contain equal elements.
-    @raise Invalid_argument if the sets have different compare functions. *)
+    contain equal elements. Raise [Invalid_argument] if the sets have different
+    compare functions. *)
 val equal : 'elt t -> 'elt t -> bool
 
 (** Total ordering between sets. Can be used as the ordering function for doing
-    sets of sets.
-    @raise Invalid_argument if the sets have different compare functions. *)
+    sets of sets. Raise [Invalid_argument] if the sets have different compare
+    functions. *)
 val compare : 'elt t -> 'elt t -> int
 
-(** [subset s1 s2] tests whether the set [s1] is a subset of the set [s2].
-    @raise Invalid_argument if the sets have different compare functions. *)
+(** [subset s1 s2] tests whether the set [s1] is a subset of the set [s2]. Raise
+    [Invalid_argument] if the sets have different compare functions. *)
 val subset : 'elt t -> 'elt t -> bool
 
 (** [for_all f s] checks if all elements of the set satisfy the predicate
