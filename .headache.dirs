@@ -1,6 +1,6 @@
 # List of directories for headache.sh
 # Add new directories below. Lines starting with '#' are ignored.
-pkg/nofunc-stdmap
-pkg/nofunc-stdmap/stdlib
-pkg/nofunc-stdset
-pkg/nofunc-stdset/stdlib
+src/nofunc-stdmap
+src/nofunc-stdmap/stdlib
+src/nofunc-stdset
+src/nofunc-stdset/stdlib
