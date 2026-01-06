@@ -61,4 +61,4 @@ jobs:
         run: opam install ./nofunc-stdmap.opam ./nofunc-stdset.opam --deps-only --with-test
 
       - name: Build & Run tests
-        run: opam exec -- dune build @all @runtest -p nofunc-stdmap,nofunc-stdset
+        run: opam exec -- dune build @all @runtest --only-packages=nofunc-stdmap,nofunc-stdset
