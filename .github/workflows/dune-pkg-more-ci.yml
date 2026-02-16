@@ -47,7 +47,11 @@ jobs:
       - name: Environment setup
         run: |
           echo "DUNE_WORKSPACE=$PWD/dune-workspace-${{ matrix.ocaml-version }}" >> "$GITHUB_ENV"
-          echo "PACKAGES=nofunc-stdmap,nofunc-stdset" >> "$GITHUB_ENV"
+          if [ "${{ matrix.ocaml-version }}" = "4.14" ]; then
+            echo "PACKAGES=nofunc-stdmap,nofunc-stdset" >> "$GITHUB_ENV"
+          else
+            echo "PACKAGES=nofunc-stdhset,nofunc-stdhtbl,nofunc-stdmap,nofunc-stdset" >> "$GITHUB_ENV"
+          fi
 
       - name: Setup Dune
         uses: mbarbin/setup-dune@ae2985bcdedc6fb24e5743d6f9dace9cf262b41c # v2.0.0+patch-4

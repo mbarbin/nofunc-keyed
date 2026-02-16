@@ -1,0 +1,6 @@
+(library
+ (name nofunc_stdhtbl)
+ (public_name nofunc-stdhtbl)
+ (libraries nofunc-stdhtbl.stdlib)
+ (instrumentation
+  (backend bisect_ppx)))

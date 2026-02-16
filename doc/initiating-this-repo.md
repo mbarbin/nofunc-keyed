@@ -11,7 +11,7 @@ initiating process almost entirely deterministic and reproducible.
 In this document we describe precisely and technically the actual steps that
 were used.
 
-## Steps
+## Step 1
 
 The first step was to initiate the part of the repository that relates to the
 `map` and `set` data structures.
@@ -59,3 +59,39 @@ The first step was to initiate the part of the repository that relates to the
     trees must raise when operating on incompatible inputs.
 
 12. Repeat steps 10 and 11 for the map0 module.
+
+## Step 2
+
+The second step was to initiate the part of the repository that relates to the
+`hashtbl` data structure.
+
+1. Create skeleton for the `stdhtbl` package.
+
+2. Imported `Hashtbl` module from an OCaml distribution, from `stdlib/` at rev: `f8ea2c42144f416f4d7a5d71a0bb2c766ca8fedc`
+
+3. Auto-fmt the code using the `conventional` profile of `ocamlformat`.
+
+4. Silence warnings 9 and build the repo. Fix odoc warnings.
+
+5. Add project license headers - initiate notices for changes to imported files.
+
+6. Start from the implementation of the `MakeSeeded` functor.
+   a. Remove its parameters, make it simply a module instead of a functor.
+   b. Add `equal` and `seeded_hash` as parameters everywhere needed instead of accessing these functions from `H`.
+   c. Inline [MakeSeeded] at toplevel, reformat the code.
+   d. Remove module type interfaces
+   e. Remove the generic version
+   f. Update the mli to match the implementation of the defunc functions.
+
+7. The interface of `hashtbl0.mli` is initiated from `Stdlib.Hashtbl.MakeSeeded`
+   but without the functor. We require a modexp argument everywhere needed.
+
+8. This steps adds new code to implement `hashtbl0.ml`. There are no functions
+   that operate on multiple tables so there is no runtime exception similar to
+   the stdmap.
+
+## Step 3
+
+1. Create a new module `Hashset` for hash sets based on `Hashtbl` using `unit`
+   as data. Adapt the interface and implementation to always have at most one
+   binding per element in the set (`add` performs a `replace`).
