@@ -1,3 +1,21 @@
+(***********************************************************************************)
+(*  nofunc-keyed: Keyed data structures adapted from OCaml Stdlib but no functors  *)
+(*  SPDX-FileCopyrightText: 2025 Mathieu Barbin <mathieu.barbin@gmail.com>         *)
+(*  SPDX-License-Identifier: LGPL-2.1-or-later WITH OCaml-LGPL-linking-exception   *)
+(***********************************************************************************)
+
+(*_ Notice: This file was copied from OCaml Stdlib:
+
+  path: "stdlib/map.ml" ; rev: f8ea2c42144f416f4d7a5d71a0bb2c766ca8fedc
+
+  The original license header was kept with the file, see below.
+
+  List of changes:
+
+  - format with ocamlformat
+
+  - disable warning 9 via directive *)
+
 (**************************************************************************)
 (*                                                                        *)
 (*                                 OCaml                                  *)
