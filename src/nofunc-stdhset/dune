@@ -1,0 +1,4 @@
+(library
+ (name nofunc_stdhset)
+ (public_name nofunc-stdhset)
+ (libraries nofunc-stdhtbl))

@@ -18,6 +18,15 @@
 (implicit_transitive_deps false-if-hidden-includes-supported)
 
 (package
+ (name nofunc-stdhset)
+ (synopsis "Hashset implemented from nofunc Hashtbl")
+ (depends
+  (ocaml
+   (>= 4.14))
+  (nofunc-stdhtbl
+   (= :version))))
+
+(package
  (name nofunc-stdhtbl)
  (synopsis "Hashtbl adapted from Stdlib but no functors")
  (depends
@@ -47,5 +56,13 @@
    (>= 5.2))
   (ocamlformat
    (= 0.28.1))
+  (nofunc-stdhset
+   (= :version))
+  (nofunc-stdhtbl
+   (= :version))
+  (nofunc-stdmap
+   (= :version))
+  (nofunc-stdset
+   (= :version))
   (sherlodoc
    (>= 0.2))))

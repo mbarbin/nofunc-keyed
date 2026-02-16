@@ -6,19 +6,8 @@
 
 module Tbl = Nofunc_stdhtbl_stdlib.Hashtbl0
 
-module type HashedType = sig
-  type t
-
-  val equal : t -> t -> bool
-  val hash : t -> int
-end
-
-module type SeededHashedType = sig
-  type t
-
-  val equal : t -> t -> bool
-  val seeded_hash : int -> t -> int
-end
+module type HashedType = Stdlib.Hashtbl.HashedType
+module type SeededHashedType = Stdlib.Hashtbl.SeededHashedType
 
 type (!'key, !'data) t =
   { equal : 'key -> 'key -> bool

@@ -118,8 +118,8 @@ val create : ?random:bool -> int -> ('a, 'b) t
 
     If no [~random] parameter is given, hash tables are created in non-random
     mode by default. This default can be changed either programmatically by
-    calling {!randomize} or by setting the [R] flag in the [OCAMLRUNPARAM]
-    environment variable.
+    calling [Stdlib.Hashtbl.randomize] or by setting the [R] flag in the
+    [OCAMLRUNPARAM] environment variable.
 
     @before 4.00
       the [~random] parameter was not present and all hash tables were created

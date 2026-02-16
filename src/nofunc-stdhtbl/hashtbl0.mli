@@ -33,7 +33,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(** Hash tables and hash functions.
+(** Hash tables.
 
     Hash tables are hashed association tables, with in-place modification.
     Because most operations on a hash table modify their input, they're more
@@ -58,42 +58,8 @@
     state. Thus, concurrent accesses to a hash tables must be synchronized (for
     instance with a [Mutex.t]). *)
 
-module type HashedType = sig
-  (** The type of the hashtable keys. *)
-  type t
-
-  (** The equality predicate used to compare keys. *)
-  val equal : t -> t -> bool
-
-  (** A hashing function on keys. It must be such that if two keys are
-      equal according to [equal], then they have identical hash values
-      as computed by [hash].
-      Examples: suitable ([equal], [hash]) pairs for arbitrary key
-      types include
-      - ([(=)], {!hash}) for comparing objects by structure
-        (provided objects do not contain floats)
-      - ([(fun x y -> compare x y = 0)], {!hash})
-        for comparing objects by structure
-        and handling {!Stdlib.nan} correctly
-      - ([(==)], {!hash}) for comparing objects by physical
-        equality (e.g. for mutable or cyclic objects). *)
-  val hash : t -> int
-end
-
-module type SeededHashedType = sig
-  (** The type of the hashtable keys. *)
-  type t
-
-  (** The equality predicate used to compare keys. *)
-  val equal : t -> t -> bool
-
-  (** A seeded hashing function on keys.  The first argument is
-      the seed.  It must be the case that if [equal x y] is true,
-      then [seeded_hash seed x = seeded_hash seed y] for any value of
-      [seed].  A suitable choice for [seeded_hash] is the function
-      {!Hashtbl.seeded_hash} below. *)
-  val seeded_hash : int -> t -> int
-end
+module type HashedType = Stdlib.Hashtbl.HashedType
+module type SeededHashedType = Stdlib.Hashtbl.SeededHashedType
 
 (** The type of hash tables from type ['a] to type ['b]. *)
 type (!'a, !'b) t
@@ -242,7 +208,7 @@ val replace_seq : ('a, 'b) t -> ('a * 'b) Seq.t -> unit
     [Hashtbl.create] or deterministic over all executions.
 
     A hash table that is created with [~random] set to [false] uses a fixed hash
-    function ({!hash}) to distribute keys among buckets. As a consequence,
+    function ([hash]) to distribute keys among buckets. As a consequence,
     collisions between keys happen deterministically. In Web-facing applications
     or other security-sensitive applications, the deterministic collision
     patterns can be exploited by a malicious user to create a denial-of-service
@@ -250,7 +216,7 @@ val replace_seq : ('a, 'b) t -> ('a * 'b) Seq.t -> unit
     table, slowing the application down.
 
     A hash table that is created with [~random] set to [true] uses the seeded
-    hash function {!seeded_hash} with a seed that is randomly chosen at hash
+    hash function [seeded_hash] with a seed that is randomly chosen at hash
     table creation time. In effect, the hash function used is randomly selected
     among [2^{30}] different hash functions. All these hash functions have
     different collision patterns, rendering ineffective the denial-of-service
