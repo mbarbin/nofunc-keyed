@@ -1,0 +1,24 @@
+{
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "cSpell.words": [
+        "accu",
+        "Automatique",
+        "Barbin",
+        "Cristal",
+        "functors",
+        "Informatique",
+        "Institut",
+        "mapi",
+        "Mathieu",
+        "mbarbin",
+        "ocamlformat",
+        "projet",
+        "Rocquencourt",
+        "snoc",
+        "sprintf",
+        "Stdlib",
+        "stdmap",
+        "stdset"
+    ]
+}
