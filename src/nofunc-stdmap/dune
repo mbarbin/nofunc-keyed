@@ -1,4 +1,6 @@
 (library
  (name nofunc_stdmap)
  (public_name nofunc-stdmap)
- (libraries nofunc-stdmap.stdlib))
+ (libraries nofunc-stdmap.stdlib)
+ (instrumentation
+  (backend bisect_ppx)))

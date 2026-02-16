@@ -1,0 +1,6 @@
+(library
+ (name nofunc_stdlib)
+ (public_name nofunc-keyed-dev.stdlib)
+ (libraries dyn ordering pp)
+ (instrumentation
+  (backend bisect_ppx)))

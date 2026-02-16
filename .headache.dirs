@@ -8,3 +8,9 @@ src/nofunc-stdmap
 src/nofunc-stdmap/stdlib
 src/nofunc-stdset
 src/nofunc-stdset/stdlib
+test/stdhset
+test/stdhtbl
+test/stdlib/src
+test/stdlib/test
+test/stdmap
+test/stdset

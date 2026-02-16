@@ -56,6 +56,8 @@
    (>= 5.2))
   (ocamlformat
    (= 0.28.1))
+  bisect_ppx
+  dyn
   (nofunc-stdhset
    (= :version))
   (nofunc-stdhtbl
@@ -64,5 +66,8 @@
    (= :version))
   (nofunc-stdset
    (= :version))
+  ordering
+  pp
+  ppx_expect
   (sherlodoc
    (>= 0.2))))

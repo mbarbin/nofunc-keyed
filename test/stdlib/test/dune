@@ -1,0 +1,17 @@
+(library
+ (name nofunc_stdlib_test)
+ (package nofunc-keyed-dev)
+ (inline_tests)
+ (flags
+  :standard
+  -w
+  +a-4-40-41-42-44-45-48-66
+  -warn-error
+  +a
+  -open
+  Nofunc_stdlib)
+ (libraries nofunc_stdlib)
+ (instrumentation
+  (backend bisect_ppx))
+ (preprocess
+  (pps ppx_expect)))
