@@ -56,6 +56,8 @@ module type OrderedType = sig
   val compare : t -> t -> int
 end
 
+(** {1:sets Sets} *)
+
 (** The type of sets of elements of type ['elt]. *)
 type 'elt t
 
