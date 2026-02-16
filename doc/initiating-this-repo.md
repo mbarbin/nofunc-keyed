@@ -74,3 +74,11 @@ The second step was to initiate the part of the repository that relates to the
 4. Silence warnings 9 and build the repo. Fix odoc warnings.
 
 5. Add project license headers - initiate notices for changes to imported files.
+
+6. Start from the implementation of the `MakeSeeded` functor.
+   a. Remove its parameters, make it simply a module instead of a functor.
+   b. Add `equal` and `seeded_hash` as parameters everywhere needed instead of accessing these functions from `H`.
+   c. Inline [MakeSeeded] at toplevel, reformat the code.
+   d. Remove module type interfaces
+   e. Remove the generic version
+   f. Update the mli to match the implementation of the defunc functions.
