@@ -18,6 +18,13 @@
 (implicit_transitive_deps false-if-hidden-includes-supported)
 
 (package
+ (name nofunc-stdhtbl)
+ (synopsis "Hashtbl adapted from Stdlib but no functors")
+ (depends
+  (ocaml
+   (>= 4.14))))
+
+(package
  (name nofunc-stdmap)
  (synopsis "Map adapted from Stdlib but no functors")
  (depends

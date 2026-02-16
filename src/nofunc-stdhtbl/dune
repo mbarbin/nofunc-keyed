@@ -1,0 +1,4 @@
+(library
+ (name nofunc_stdhtbl)
+ (public_name nofunc-stdhtbl)
+ (libraries nofunc-stdhtbl.stdlib))
