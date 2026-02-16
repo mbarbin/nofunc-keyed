@@ -40,21 +40,9 @@
     key (see {!find}, {!find_opt}) is normally very fast, often faster than the
     equivalent lookup in [Map].
 
-    The functors {!Make} and {!MakeSeeded} can be used when performance or
-    flexibility are key. The user provides custom equality and hash functions
-    for the key type, and obtains a custom hash table type for this particular
-    type of key.
-
     {b Warning} a hash table is only as good as the hash function. A bad hash
     function will turn the table into a degenerate association list, with linear
-    time lookup instead of constant time lookup.
-
-    The polymorphic {!t} hash table is useful in simpler cases or in interactive
-    environments. It uses the polymorphic {!hash} function defined in the OCaml
-    runtime (at the time of writing, it's SipHash), as well as the polymorphic
-    equality [(=)].
-
-    See {{!examples} the examples section}. *)
+    time lookup instead of constant time lookup. *)
 
 (** {b Unsynchronized accesses} *)
 
@@ -70,18 +58,37 @@ unsynchronized_access
     state. Thus, concurrent accesses to a hash tables must be synchronized (for
     instance with a [Mutex.t]). *)
 
-(** {1 Generic interface} *)
+type 'key equal = 'key -> 'key -> bool
+(** The equality predicate used to compare keys. *)
+
+type 'key hash = 'key -> int
+(** A hashing function on keys. It must be such that if two keys are equal
+    according to [equal], then they have identical hash values as computed by
+    [hash]. Examples: suitable ([equal], [hash]) pairs for arbitrary key types
+    include
+    - ([(=)], {!hash}) for comparing objects by structure (provided objects do
+      not contain floats)
+    - ([(fun x y -> compare x y = 0)], {!hash}) for comparing objects by
+      structure and handling [Stdlib.nan] correctly
+    - ([(==)], {!hash}) for comparing objects by physical equality (e.g. for
+      mutable or cyclic objects). *)
+
+type 'key seeded_hash = int -> 'key -> int
+(** A seeded hashing function on keys. The first argument is the seed. It must
+    be the case that if [equal x y] is true, then
+    [seeded_hash seed x = seeded_hash seed y] for any value of [seed]. A
+    suitable choice for [seeded_hash] is the function [Hashtbl.seeded_hash]
+    below. *)
 
 type (!'a, !'b) t
 (** The type of hash tables from type ['a] to type ['b]. *)
 
-val create :
-  ?random:(* thwart tools/sync_stdlib_docs *) bool -> int -> ('a, 'b) t
-(** [Hashtbl.create n] creates a new, empty hash table, with initial size
-    greater or equal to the suggested size [n]. For best results, [n] should be
-    on the order of the expected number of elements that will be in the table.
-    The table grows as needed, so [n] is just an initial guess. If [n] is very
-    small or negative then it is disregarded and a small default size is used.
+val create : ?random:bool -> int -> ('a, 'b) t
+(** [create n] creates a new, empty hash table, with initial size greater or
+    equal to the suggested size [n]. For best results, [n] should be on the
+    order of the expected number of elements that will be in the table. The
+    table grows as needed, so [n] is just an initial guess. If [n] is very small
+    or negative then it is disregarded and a small default size is used.
 
     The optional [~random] parameter (a boolean) controls whether the internal
     organization of the hash table is randomized at each execution of
@@ -126,7 +133,7 @@ val reset : ('a, 'b) t -> unit
 val copy : ('a, 'b) t -> ('a, 'b) t
 (** Return a copy of the given hashtable. *)
 
-val add : ('a, 'b) t -> 'a -> 'b -> unit
+val add : seeded_hash:'a seeded_hash -> ('a, 'b) t -> 'a -> 'b -> unit
 (** [Hashtbl.add tbl key data] adds a binding of [key] to [data] in table [tbl].
 
     {b Warning}: Previous bindings for [key] are not removed, but simply hidden.
@@ -135,39 +142,52 @@ val add : ('a, 'b) t -> 'a -> 'b -> unit
 
     If you desire the classic behavior of replacing elements, see {!replace}. *)
 
-val find : ('a, 'b) t -> 'a -> 'b
+val find :
+  equal:'a equal -> seeded_hash:'a seeded_hash -> ('a, 'b) t -> 'a -> 'b
 (** [Hashtbl.find tbl x] returns the current binding of [x] in [tbl], or raises
     [Not_found] if no such binding exists. *)
 
-val find_opt : ('a, 'b) t -> 'a -> 'b option
+val find_opt :
+  equal:'a equal -> seeded_hash:'a seeded_hash -> ('a, 'b) t -> 'a -> 'b option
 (** [Hashtbl.find_opt tbl x] returns the current binding of [x] in [tbl], or
     [None] if no such binding exists.
     @since 4.05 *)
 
-val find_all : ('a, 'b) t -> 'a -> 'b list
+val find_all :
+  equal:'a equal -> seeded_hash:'a seeded_hash -> ('a, 'b) t -> 'a -> 'b list
 (** [Hashtbl.find_all tbl x] returns the list of all data associated with [x] in
     [tbl]. The current binding is returned first, then the previous bindings, in
     reverse order of introduction in the table. *)
 
-val mem : ('a, 'b) t -> 'a -> bool
+val mem :
+  equal:'a equal -> seeded_hash:'a seeded_hash -> ('a, 'b) t -> 'a -> bool
 (** [Hashtbl.mem tbl x] checks if [x] is bound in [tbl]. *)
 
-val remove : ('a, 'b) t -> 'a -> unit
+val remove :
+  equal:'a equal -> seeded_hash:'a seeded_hash -> ('a, 'b) t -> 'a -> unit
 (** [Hashtbl.remove tbl x] removes the current binding of [x] in [tbl],
     restoring the previous binding if it exists. It does nothing if [x] is not
     bound in [tbl]. *)
 
-val find_and_remove : ('a, 'b) t -> 'a -> 'b option
+val find_and_remove :
+  equal:'a equal -> seeded_hash:'a seeded_hash -> ('a, 'b) t -> 'a -> 'b option
 (** Same as {!remove} but returns the previous binding, if any.
     @since 5.5 *)
 
-val replace : ('a, 'b) t -> 'a -> 'b -> unit
+val replace :
+  equal:'a equal -> seeded_hash:'a seeded_hash -> ('a, 'b) t -> 'a -> 'b -> unit
 (** [Hashtbl.replace tbl key data] replaces the current binding of [key] in
     [tbl] by a binding of [key] to [data]. If [key] is unbound in [tbl], a
     binding of [key] to [data] is added to [tbl]. This is functionally
     equivalent to {!remove}[ tbl key] followed by {!add}[ tbl key data]. *)
 
-val find_and_replace : ('a, 'b) t -> 'a -> 'b -> 'b option
+val find_and_replace :
+  equal:'a equal ->
+  seeded_hash:'a seeded_hash ->
+  ('a, 'b) t ->
+  'a ->
+  'b ->
+  'b option
 (** Same as {!replace} but returns the previous binding, if any.
     @since 5.5 *)
 
@@ -243,21 +263,6 @@ val is_randomized : unit -> bool
     default, [false] otherwise.
     @since 4.03 *)
 
-val rebuild :
-  ?random:(* thwart tools/sync_stdlib_docs *) bool -> ('a, 'b) t -> ('a, 'b) t
-(** Return a copy of the given hashtable. Unlike {!copy}, {!rebuild}[ h]
-    re-hashes all the (key, value) entries of the original table [h]. The
-    returned hash table is randomized if [h] was randomized, or the optional
-    [random] parameter is true, or if the default is to create randomized hash
-    tables; see {!create} for more information.
-
-    {!rebuild} can safely be used to import a hash table built by an old version
-    of the [Hashtbl] module, then marshaled to persistent storage. After
-    unmarshaling, apply {!rebuild} to produce a hash table for the current
-    version of the [Hashtbl] module.
-
-    @since 4.12 *)
-
 type statistics = {
   num_bindings : int;
       (** Number of bindings present in the table. Same value as returned by
@@ -297,170 +302,23 @@ val to_seq_values : (_, 'b) t -> 'b Seq.t
 (** Same as [Seq.map snd (to_seq m)]
     @since 4.07 *)
 
-val add_seq : ('a, 'b) t -> ('a * 'b) Seq.t -> unit
+val add_seq :
+  seeded_hash:'a seeded_hash -> ('a, 'b) t -> ('a * 'b) Seq.t -> unit
 (** Add the given bindings to the table, using {!add}
     @since 4.07 *)
 
-val replace_seq : ('a, 'b) t -> ('a * 'b) Seq.t -> unit
+val replace_seq :
+  equal:'a equal ->
+  seeded_hash:'a seeded_hash ->
+  ('a, 'b) t ->
+  ('a * 'b) Seq.t ->
+  unit
 (** Add the given bindings to the table, using {!replace}
     @since 4.07 *)
 
-val of_seq : ('a * 'b) Seq.t -> ('a, 'b) t
+val of_seq :
+  equal:'a equal -> seeded_hash:'a seeded_hash -> ('a * 'b) Seq.t -> ('a, 'b) t
 (** Build a table from the given bindings. The bindings are added in the same
     order they appear in the sequence, using {!replace_seq}, which means that if
     two pairs have the same key, only the latest one will appear in the table.
     @since 4.07 *)
-
-(** The input signature of the functor {!Make}. *)
-module type HashedType = sig
-  type t
-  (** The type of the hashtable keys. *)
-
-  val equal : t -> t -> bool
-  (** The equality predicate used to compare keys. *)
-
-  val hash : t -> int
-  (** A hashing function on keys. It must be such that if two keys are equal
-      according to [equal], then they have identical hash values as computed by
-      [hash]. Examples: suitable ([equal], [hash]) pairs for arbitrary key types
-      include
-      - ([(=)], {!hash}) for comparing objects by structure (provided objects do
-        not contain floats)
-      - ([(fun x y -> compare x y = 0)], {!hash}) for comparing objects by
-        structure and handling [Stdlib.nan] correctly
-      - ([(==)], {!hash}) for comparing objects by physical equality (e.g. for
-        mutable or cyclic objects). *)
-end
-
-(** The output signature of the functor {!Make}. *)
-module type S = sig
-  type key
-  type !'a t
-
-  val create : int -> 'a t
-  val clear : 'a t -> unit
-
-  val reset : 'a t -> unit
-  (** @since 4.00 *)
-
-  val copy : 'a t -> 'a t
-  val add : 'a t -> key -> 'a -> unit
-  val remove : 'a t -> key -> unit
-
-  val find_and_remove : 'a t -> key -> 'a option
-  (** @since 5.5 *)
-
-  val find : 'a t -> key -> 'a
-
-  val find_opt : 'a t -> key -> 'a option
-  (** @since 4.05 *)
-
-  val find_all : 'a t -> key -> 'a list
-  val replace : 'a t -> key -> 'a -> unit
-
-  val find_and_replace : 'a t -> key -> 'a -> 'a option
-  (** @since 5.5 *)
-
-  val mem : 'a t -> key -> bool
-  val iter : (key -> 'a -> unit) -> 'a t -> unit
-
-  val filter_map_inplace : (key -> 'a -> 'a option) -> 'a t -> unit
-  (** @since 4.03 *)
-
-  val fold : (key -> 'a -> 'acc -> 'acc) -> 'a t -> 'acc -> 'acc
-  val length : 'a t -> int
-
-  val stats : 'a t -> statistics
-  (** @since 4.00 *)
-
-  val to_seq : 'a t -> (key * 'a) Seq.t
-  (** @since 4.07 *)
-
-  val to_seq_keys : _ t -> key Seq.t
-  (** @since 4.07 *)
-
-  val to_seq_values : 'a t -> 'a Seq.t
-  (** @since 4.07 *)
-
-  val add_seq : 'a t -> (key * 'a) Seq.t -> unit
-  (** @since 4.07 *)
-
-  val replace_seq : 'a t -> (key * 'a) Seq.t -> unit
-  (** @since 4.07 *)
-
-  val of_seq : (key * 'a) Seq.t -> 'a t
-  (** @since 4.07 *)
-end
-
-(** The input signature of the functor {!MakeSeeded}.
-    @since 4.00 *)
-module type SeededHashedType = sig
-  type t
-  (** The type of the hashtable keys. *)
-
-  val equal : t -> t -> bool
-  (** The equality predicate used to compare keys. *)
-
-  val seeded_hash : int -> t -> int
-  (** A seeded hashing function on keys. The first argument is the seed. It must
-      be the case that if [equal x y] is true, then
-      [seeded_hash seed x = seeded_hash seed y] for any value of [seed]. A
-      suitable choice for [seeded_hash] is the function [Hashtbl.seeded_hash]
-      below. *)
-end
-
-(** The output signature of the functor {!MakeSeeded}.
-    @since 4.00 *)
-module type SeededS = sig
-  type key
-  type !'a t
-
-  val create : ?random:(* thwart tools/sync_stdlib_docs *) bool -> int -> 'a t
-  val clear : 'a t -> unit
-  val reset : 'a t -> unit
-  val copy : 'a t -> 'a t
-  val add : 'a t -> key -> 'a -> unit
-  val remove : 'a t -> key -> unit
-
-  val find_and_remove : 'a t -> key -> 'a option
-  (** @since 5.5 *)
-
-  val find : 'a t -> key -> 'a
-
-  val find_opt : 'a t -> key -> 'a option
-  (** @since 4.05 *)
-
-  val find_all : 'a t -> key -> 'a list
-  val replace : 'a t -> key -> 'a -> unit
-
-  val find_and_replace : 'a t -> key -> 'a -> 'a option
-  (** @since 5.5 *)
-
-  val mem : 'a t -> key -> bool
-  val iter : (key -> 'a -> unit) -> 'a t -> unit
-
-  val filter_map_inplace : (key -> 'a -> 'a option) -> 'a t -> unit
-  (** @since 4.03 *)
-
-  val fold : (key -> 'a -> 'acc -> 'acc) -> 'a t -> 'acc -> 'acc
-  val length : 'a t -> int
-  val stats : 'a t -> statistics
-
-  val to_seq : 'a t -> (key * 'a) Seq.t
-  (** @since 4.07 *)
-
-  val to_seq_keys : _ t -> key Seq.t
-  (** @since 4.07 *)
-
-  val to_seq_values : 'a t -> 'a Seq.t
-  (** @since 4.07 *)
-
-  val add_seq : 'a t -> (key * 'a) Seq.t -> unit
-  (** @since 4.07 *)
-
-  val replace_seq : 'a t -> (key * 'a) Seq.t -> unit
-  (** @since 4.07 *)
-
-  val of_seq : (key * 'a) Seq.t -> 'a t
-  (** @since 4.07 *)
-end
