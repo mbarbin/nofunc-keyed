@@ -12,7 +12,11 @@
 
   List of changes:
 
-  - format file with ocamlformat *)
+  - format file with ocamlformat
+
+  - Remove the functors and module type signatures. Remove the generic and
+  polymorphic versions. Keep only the former functorized interface but defunc,
+  that is require [equal] and [seeded_hash] everywhere needed. *)
 
 (**************************************************************************)
 (*                                                                        *)

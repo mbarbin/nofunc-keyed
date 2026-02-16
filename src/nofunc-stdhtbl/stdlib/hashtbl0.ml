@@ -14,7 +14,11 @@
 
   - format with ocamlformat
 
-  - disable warning 9 via directive *)
+  - disable warning 9 via directive
+
+  - Remove the functors and module type signatures. Remove the generic and
+  polymorphic versions. Keep only the former functorized interface but defunc,
+  that is require [equal] and [seeded_hash] everywhere needed. *)
 
 (**************************************************************************)
 (*                                                                        *)
