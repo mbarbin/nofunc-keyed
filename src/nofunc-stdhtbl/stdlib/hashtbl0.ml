@@ -33,7 +33,17 @@
 
 [@@@warning "-9"]
 
+(* CR mbarbin: Temporarily we allow unused values to build but in the next
+   commit we enable it again and resolve it. *)
+[@@@warning "-32"]
+
 (* Hash tables *)
+
+(* To avoid using [Stdlib.equal] by accident, we shadow the function [equal] in
+   this file. The variable [equal] may only be used when brought to scope as a
+   function argument. *)
+let equal = `shadow_stdlib_equal
+let _ = equal
 
 (* We do dynamic hashing, and resize the table and rehash the elements when the
    load factor becomes too high. *)
@@ -360,29 +370,27 @@ module type SeededS = sig
   val of_seq : (key * 'a) Seq.t -> 'a t
 end
 
-module MakeSeeded (H : SeededHashedType) : SeededS with type key = H.t = struct
-  type key = H.t
-  type 'a hashtbl = (key, 'a) t
-  type 'a t = 'a hashtbl
-
+module MakeSeeded = struct
   let create = create
   let clear = clear
   let reset = reset
   let copy = copy
-  let key_index h key = H.seeded_hash h.seed key land (Array.length h.data - 1)
 
-  let add h key data =
-    let i = key_index h key in
+  let key_index ~seeded_hash h key =
+    seeded_hash h.seed key land (Array.length h.data - 1)
+
+  let add ~seeded_hash h key data =
+    let i = key_index ~seeded_hash h key in
     let bucket = Cons { key; data; next = h.data.(i) } in
     h.data.(i) <- bucket;
     h.size <- h.size + 1;
-    if h.size > Array.length h.data lsl 1 then resize key_index h
+    if h.size > Array.length h.data lsl 1 then resize (key_index ~seeded_hash) h
 
-  let rec remove_bucket h i key prec bucket =
+  let rec remove_bucket ~equal h i key prec bucket =
     match bucket with
     | Empty -> bucket
     | Cons { key = k; next; _ } ->
-        if H.equal k key then begin
+        if equal k key then begin
           h.size <- h.size - 1;
           begin match prec with
           | Empty -> h.data.(i) <- next
@@ -390,112 +398,118 @@ module MakeSeeded (H : SeededHashedType) : SeededS with type key = H.t = struct
           end;
           bucket
         end
-        else remove_bucket h i key bucket next
+        else remove_bucket ~equal h i key bucket next
 
-  let find_and_remove h key =
-    let i = key_index h key in
-    let bucket = remove_bucket h i key Empty h.data.(i) in
+  let find_and_remove ~equal ~seeded_hash h key =
+    let i = key_index ~seeded_hash h key in
+    let bucket = remove_bucket ~equal h i key Empty h.data.(i) in
     match bucket with Empty -> None | Cons { data; _ } -> Some data
 
-  let remove h key =
-    let i = key_index h key in
-    ignore (remove_bucket h i key Empty h.data.(i))
+  let remove ~equal ~seeded_hash h key =
+    let i = key_index ~seeded_hash h key in
+    ignore (remove_bucket ~equal h i key Empty h.data.(i))
 
-  let rec find_rec key = function
+  let rec find_rec ~equal key = function
     | Empty -> raise Not_found
     | Cons { key = k; data; next } ->
-        if H.equal key k then data else find_rec key next
+        if equal key k then data else find_rec ~equal key next
 
-  let find h key =
-    match h.data.(key_index h key) with
+  let find ~equal ~seeded_hash h key =
+    match h.data.(key_index ~seeded_hash h key) with
     | Empty -> raise Not_found
     | Cons { key = k1; data = d1; next = next1 } -> (
-        if H.equal key k1 then d1
+        if equal key k1 then d1
         else
           match next1 with
           | Empty -> raise Not_found
           | Cons { key = k2; data = d2; next = next2 } -> (
-              if H.equal key k2 then d2
+              if equal key k2 then d2
               else
                 match next2 with
                 | Empty -> raise Not_found
                 | Cons { key = k3; data = d3; next = next3 } ->
-                    if H.equal key k3 then d3 else find_rec key next3))
+                    if equal key k3 then d3 else find_rec ~equal key next3))
 
-  let rec find_rec_opt key = function
+  let rec find_rec_opt ~equal key = function
     | Empty -> None
     | Cons { key = k; data; next } ->
-        if H.equal key k then Some data else find_rec_opt key next
+        if equal key k then Some data else find_rec_opt ~equal key next
 
-  let find_opt h key =
-    match h.data.(key_index h key) with
+  let find_opt ~equal ~seeded_hash h key =
+    match h.data.(key_index ~seeded_hash h key) with
     | Empty -> None
     | Cons { key = k1; data = d1; next = next1 } -> (
-        if H.equal key k1 then Some d1
+        if equal key k1 then Some d1
         else
           match next1 with
           | Empty -> None
           | Cons { key = k2; data = d2; next = next2 } -> (
-              if H.equal key k2 then Some d2
+              if equal key k2 then Some d2
               else
                 match next2 with
                 | Empty -> None
                 | Cons { key = k3; data = d3; next = next3 } ->
-                    if H.equal key k3 then Some d3 else find_rec_opt key next3))
+                    if equal key k3 then Some d3
+                    else find_rec_opt ~equal key next3))
 
-  let find_all h key =
+  let find_all ~equal ~seeded_hash h key =
     let[@tail_mod_cons] rec find_in_bucket = function
       | Empty -> []
       | Cons { key = k; data = d; next } ->
-          if H.equal k key then d :: find_in_bucket next
-          else find_in_bucket next
+          if equal k key then d :: find_in_bucket next else find_in_bucket next
     in
-    find_in_bucket h.data.(key_index h key)
+    find_in_bucket h.data.(key_index ~seeded_hash h key)
 
-  let rec retrieve_bucket key bucket =
+  let rec retrieve_bucket ~equal key bucket =
     match bucket with
     | Empty -> bucket
     | Cons { key = k; next } ->
-        if H.equal k key then bucket else retrieve_bucket key next
+        if equal k key then bucket else retrieve_bucket ~equal key next
 
-  let replace_bucket h key i l data = function
+  let replace_bucket ~seeded_hash h key i l data = function
     | Empty ->
         h.data.(i) <- Cons { key; data; next = l };
         h.size <- h.size + 1;
-        if h.size > Array.length h.data lsl 1 then resize key_index h
+        if h.size > Array.length h.data lsl 1 then
+          resize (key_index ~seeded_hash) h
     | Cons slot ->
         slot.key <- key;
         slot.data <- data
 
-  let find_and_replace h key data =
-    let i = key_index h key in
+  let find_and_replace ~equal ~seeded_hash h key data =
+    let i = key_index ~seeded_hash h key in
     let l = h.data.(i) in
-    let bucket = retrieve_bucket key l in
+    let bucket = retrieve_bucket ~equal key l in
     let old_data =
       match bucket with Cons { data; _ } -> Some data | Empty -> None
     in
-    replace_bucket h key i l data bucket;
+    replace_bucket ~seeded_hash h key i l data bucket;
     old_data
 
-  let replace h key data =
-    let i = key_index h key in
+  let replace ~equal ~seeded_hash h key data =
+    let i = key_index ~seeded_hash h key in
     let l = h.data.(i) in
-    let bucket = retrieve_bucket key l in
-    replace_bucket h key i l data bucket
+    let bucket = retrieve_bucket ~equal key l in
+    replace_bucket ~seeded_hash h key i l data bucket
 
   (* Iterators *)
 
-  let rec mem_in_bucket key = function
+  let rec mem_in_bucket ~equal key = function
     | Empty -> false
-    | Cons { key = k; next } -> H.equal k key || mem_in_bucket key next
+    | Cons { key = k; next } -> equal k key || mem_in_bucket ~equal key next
 
-  let mem h key = mem_in_bucket key h.data.(key_index h key)
-  let add_seq tbl i = Seq.iter (fun (k, v) -> add tbl k v) i
-  let replace_seq tbl i = Seq.iter (fun (k, v) -> replace tbl k v) i
+  let mem ~equal ~seeded_hash h key =
+    mem_in_bucket ~equal key h.data.(key_index ~seeded_hash h key)
 
-  let of_seq i =
+  let add_seq ~seeded_hash tbl i =
+    Seq.iter (fun (k, v) -> add ~seeded_hash tbl k v) i
+
+  let replace_seq ~equal ~seeded_hash tbl i =
+    Seq.iter (fun (k, v) -> replace ~equal ~seeded_hash tbl k v) i
+
+  let of_seq ~equal ~seeded_hash i =
     let tbl = create 16 in
-    replace_seq tbl i;
+    replace_seq ~equal ~seeded_hash tbl i;
     tbl
 
   let iter = iter
@@ -506,22 +520,6 @@ module MakeSeeded (H : SeededHashedType) : SeededS with type key = H.t = struct
   let to_seq = to_seq
   let to_seq_keys = to_seq_keys
   let to_seq_values = to_seq_values
-end
-
-module Make (H : HashedType) : S with type key = H.t = struct
-  include MakeSeeded (struct
-    type t = H.t
-
-    let equal = H.equal
-    let seeded_hash (_seed : int) x = H.hash x
-  end)
-
-  let create sz = create ~random:false sz
-
-  let of_seq i =
-    let tbl = create 16 in
-    replace_seq tbl i;
-    tbl
 end
 
 (* Polymorphic hash function-based tables *)

@@ -311,36 +311,6 @@ val of_seq : ('a * 'b) Seq.t -> ('a, 'b) t
     two pairs have the same key, only the latest one will appear in the table.
     @since 4.07 *)
 
-(** {1 Functorial interface} *)
-
-(** The functorial interface allows the use of specific comparison and hash
-    functions, either for performance/security concerns, or because keys are not
-    hashable/comparable with the polymorphic builtins.
-
-    For instance, one might want to specialize a table for integer keys:
-    {[
-      module IntHash =
-        struct
-          type t = int
-          let equal i j = i=j
-          let hash i = i land max_int
-        end
-
-      module IntHashtbl = Hashtbl.Make(IntHash)
-
-      let h = IntHashtbl.create 17 in
-      IntHashtbl.add h 12 "hello"
-    ]}
-
-    This creates a new module [IntHashtbl], with a new type ['a IntHashtbl.t] of
-    tables from [int] to ['a]. In this example, [h] contains [string] values so
-    its type is [string IntHashtbl.t].
-
-    Note that the new type ['a IntHashtbl.t] is not compatible with the type
-    [('a,'b) Hashtbl.t] of the generic interface. For example,
-    [Hashtbl.length h] would not type-check, you must use [IntHashtbl.length].
-*)
-
 (** The input signature of the functor {!Make}. *)
 module type HashedType = sig
   type t
@@ -422,16 +392,6 @@ module type S = sig
   (** @since 4.07 *)
 end
 
-(** Functor building an implementation of the hashtable structure. The functor
-    [Hashtbl.Make] returns a structure containing a type [key] of keys and a
-    type ['a t] of hash tables associating data of type ['a] to keys of type
-    [key]. The operations perform similarly to those of the generic interface,
-    but use the hashing and equality functions specified in the functor argument
-    [H] instead of generic equality and hashing. Since the hash function is not
-    seeded, the [create] operation of the result structure always returns
-    non-randomized hash tables. *)
-module Make (H : HashedType) : S with type key = H.t
-
 (** The input signature of the functor {!MakeSeeded}.
     @since 4.00 *)
 module type SeededHashedType = sig
@@ -504,15 +464,3 @@ module type SeededS = sig
   val of_seq : (key * 'a) Seq.t -> 'a t
   (** @since 4.07 *)
 end
-
-(** Functor building an implementation of the hashtable structure. The functor
-    [Hashtbl.MakeSeeded] returns a structure containing a type [key] of keys and
-    a type ['a t] of hash tables associating data of type ['a] to keys of type
-    [key]. The operations perform similarly to those of the generic interface,
-    but use the seeded hashing and equality functions specified in the functor
-    argument [H] instead of generic equality and hashing. The [create] operation
-    of the result structure supports the [~random] optional parameter and
-    returns randomized hash tables if [~random:true] is passed or if
-    randomization is globally on (see [Hashtbl.randomize]).
-    @since 4.00 *)
-module MakeSeeded (H : SeededHashedType) : SeededS with type key = H.t
