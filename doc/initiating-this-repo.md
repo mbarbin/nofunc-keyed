@@ -48,3 +48,12 @@ The first step was to initiate the part of the repository that relates to the
 
 9. Repeat step 7 for the map module. Propagate `compare` arguments and fix
    the build.
+
+10. The interface of `set0.mli` is initiated from a copy from `Stdlib`, and then
+    we remove the functor. We make the type parametrized by the type of
+    elements, and require `Ord` as modexp argument everywhere needed.
+
+11. This step adds new code to implement `set0.ml`. We try to make the code as
+    deterministic as possible. The functions operating on one tree should be
+    built with a simple alias helper, while functions operations on multiple
+    trees must raise when operating on incompatible inputs.
