@@ -38,7 +38,7 @@
 (** The type of hash sets of elements of type ['a]. *)
 type !'a t
 
-(** Empty a hash sete. Use [reset] instead of [clear] to shrink the size of the
+(** Empty a hash set. Use [reset] instead of [clear] to shrink the size of the
     bucket table to its initial size. *)
 val clear : 'a t -> unit
 
