@@ -65,6 +65,10 @@ The first step was to initiate the part of the repository that relates to the
 The second step was to initiate the part of the repository that relates to the
 `hashtbl` data structure.
 
-1. Imported `Hashtbl` module from an OCaml distribution, from `stdlib/` at rev: `f8ea2c42144f416f4d7a5d71a0bb2c766ca8fedc`
+1. Create skeleton for the `stdhtbl` package.
 
-2. Auto-fmt the code using the `conventional` profile of `ocamlformat`.
+2. Imported `Hashtbl` module from an OCaml distribution, from `stdlib/` at rev: `f8ea2c42144f416f4d7a5d71a0bb2c766ca8fedc`
+
+3. Auto-fmt the code using the `conventional` profile of `ocamlformat`.
+
+4. Silence warnings 9 and build the repo.

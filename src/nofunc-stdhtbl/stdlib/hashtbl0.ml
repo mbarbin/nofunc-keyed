@@ -13,6 +13,8 @@
 (*                                                                        *)
 (**************************************************************************)
 
+[@@@warning "-9"]
+
 (* Hash tables *)
 
 (* We do dynamic hashing, and resize the table and rehash the elements when the
