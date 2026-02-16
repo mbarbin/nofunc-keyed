@@ -11,7 +11,7 @@ initiating process almost entirely deterministic and reproducible.
 In this document we describe precisely and technically the actual steps that
 were used.
 
-## Steps
+## First Step
 
 The first step was to initiate the part of the repository that relates to the
 `map` and `set` data structures.
@@ -59,3 +59,10 @@ The first step was to initiate the part of the repository that relates to the
     trees must raise when operating on incompatible inputs.
 
 12. Repeat steps 10 and 11 for the map0 module.
+
+## Second Step
+
+The second step was to initiate the part of the repository that relates to the
+`hashtbl` data structure.
+
+1. Imported `Hashtbl` module from an OCaml distribution, from `stdlib/` at rev: `f8ea2c42144f416f4d7a5d71a0bb2c766ca8fedc`
