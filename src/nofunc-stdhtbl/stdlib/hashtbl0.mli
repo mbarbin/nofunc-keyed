@@ -245,42 +245,7 @@ val length : ('a, 'b) t -> int
     constant time. Multiple bindings are counted once each, so [Hashtbl.length]
     gives the number of times [Hashtbl.iter] calls its first argument. *)
 
-val randomize : unit -> unit
-(** After a call to [Hashtbl.randomize()], hash tables are created in randomized
-    mode by default: {!create} returns randomized hash tables, unless the
-    [~random:false] optional parameter is given. The same effect can be achieved
-    by setting the [R] parameter in the [OCAMLRUNPARAM] environment variable.
-
-    It is recommended that applications or Web frameworks that need to protect
-    themselves against the denial-of-service attack described in {!create} call
-    [Hashtbl.randomize()] at initialization time before any domains are created.
-
-    Note that once [Hashtbl.randomize()] was called, there is no way to revert
-    to the non-randomized default behavior of {!create}. This is intentional.
-    Non-randomized hash tables can still be created using
-    [Hashtbl.create ~random:false].
-
-    @since 4.00 *)
-
-val is_randomized : unit -> bool
-(** Return [true] if the tables are currently created in randomized mode by
-    default, [false] otherwise.
-    @since 4.03 *)
-
-type statistics = {
-  num_bindings : int;
-      (** Number of bindings present in the table. Same value as returned by
-          {!length}. *)
-  num_buckets : int;  (** Number of buckets in the table. *)
-  max_bucket_length : int;  (** Maximal number of bindings per bucket. *)
-  bucket_histogram : int array;
-      (** Histogram of bucket sizes. This array [histo] has length
-          [max_bucket_length + 1]. The value of [histo.(i)] is the number of
-          buckets whose size is [i]. *)
-}
-(** @since 4.00 *)
-
-val stats : ('a, 'b) t -> statistics
+val stats : ('a, 'b) t -> Stdlib.Hashtbl.statistics
 (** [Hashtbl.stats tbl] returns statistics about the table [tbl]: number of
     buckets, size of the biggest bucket, distribution of buckets by size.
     @since 4.00 *)
@@ -321,7 +286,11 @@ val replace_seq :
     @since 4.07 *)
 
 val of_seq :
-  equal:'a equal -> seeded_hash:'a seeded_hash -> ('a * 'b) Seq.t -> ('a, 'b) t
+  equal:'a equal ->
+  seeded_hash:'a seeded_hash ->
+  ?random:bool ->
+  ('a * 'b) Seq.t ->
+  ('a, 'b) t
 (** Build a table from the given bindings. The bindings are added in the same
     order they appear in the sequence, using {!replace_seq}, which means that if
     two pairs have the same key, only the latest one will appear in the table.

@@ -79,16 +79,6 @@ let flip_ongoing_traversal h = h.initial_size <- -h.initial_size
 
 (* To pick random seeds if requested *)
 
-let randomized_default =
-  let params =
-    try Sys.getenv "OCAMLRUNPARAM"
-    with Not_found -> ( try Sys.getenv "CAMLRUNPARAM" with Not_found -> "")
-  in
-  String.contains params 'R'
-
-let randomized = Atomic.make randomized_default
-let randomize () = Atomic.set randomized true
-let is_randomized () = Atomic.get randomized
 let prng_key = Domain.DLS.new_key Random.State.make_self_init
 
 (* Functions which appear before the functorial interface must either be
@@ -102,7 +92,12 @@ let rec power_2_above x n =
   else if x * 2 > Sys.max_array_length then x
   else power_2_above (x * 2) n
 
-let create ?(random = Atomic.get randomized) initial_size =
+let create ?random initial_size =
+  let random =
+    match random with
+    | Some value -> value
+    | None -> Stdlib.Hashtbl.is_randomized ()
+  in
   let s = power_2_above 16 initial_size in
   let seed =
     if random then Random.State.bits (Domain.DLS.get prng_key) else 0
@@ -251,13 +246,6 @@ let fold f h init =
     flip_ongoing_traversal h;
     raise exn
 
-type statistics = {
-  num_bindings : int;
-  num_buckets : int;
-  max_bucket_length : int;
-  bucket_histogram : int array;
-}
-
 let rec bucket_length accu = function
   | Empty -> accu
   | Cons { next } -> bucket_length (accu + 1) next
@@ -273,7 +261,7 @@ let stats h =
       histo.(l) <- histo.(l) + 1)
     h.data;
   {
-    num_bindings = h.size;
+    Stdlib.Hashtbl.num_bindings = h.size;
     num_buckets = Array.length h.data;
     max_bucket_length = mbl;
     bucket_histogram = histo;
@@ -429,7 +417,7 @@ let add_seq ~seeded_hash tbl i =
 let replace_seq ~equal ~seeded_hash tbl i =
   Seq.iter (fun (k, v) -> replace ~equal ~seeded_hash tbl k v) i
 
-let of_seq ~equal ~seeded_hash i =
-  let tbl = create 16 in
+let of_seq ~equal ~seeded_hash ?random i =
+  let tbl = create ?random 16 in
   replace_seq ~equal ~seeded_hash tbl i;
   tbl
