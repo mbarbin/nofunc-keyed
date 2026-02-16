@@ -531,10 +531,6 @@ end
 external seeded_hash_param : int -> int -> int -> 'a -> int = "caml_hash"
 [@@noalloc]
 
-let hash x = seeded_hash_param 10 100 0 x
-let hash_param n1 n2 x = seeded_hash_param n1 n2 0 x
-let seeded_hash seed x = seeded_hash_param 10 100 seed x
-
 let key_index h key =
   if Obj.size (Obj.repr h) >= 4 then
     seeded_hash_param 10 100 h.seed key land (Array.length h.data - 1)
