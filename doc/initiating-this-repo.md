@@ -66,3 +66,5 @@ The second step was to initiate the part of the repository that relates to the
 `hashtbl` data structure.
 
 1. Imported `Hashtbl` module from an OCaml distribution, from `stdlib/` at rev: `f8ea2c42144f416f4d7a5d71a0bb2c766ca8fedc`
+
+2. Auto-fmt the code using the `conventional` profile of `ocamlformat`.
