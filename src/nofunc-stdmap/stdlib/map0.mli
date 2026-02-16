@@ -6,7 +6,7 @@
 
 (*_ Notice: This file was copied from OCaml Stdlib:
 
-  path: "stdlib/map.ml" ; rev: f8ea2c42144f416f4d7a5d71a0bb2c766ca8fedc
+  path: "stdlib/map.mli" ; rev: f8ea2c42144f416f4d7a5d71a0bb2c766ca8fedc
 
   The original license header was kept with the file, see below.
 
