@@ -22,7 +22,7 @@
  (synopsis "Hashset implemented from nofunc Hashtbl")
  (depends
   (ocaml
-   (>= 4.14))
+   (>= 5.2))
   (nofunc-stdhtbl
    (= :version))))
 
@@ -31,7 +31,7 @@
  (synopsis "Hashtbl adapted from Stdlib but no functors")
  (depends
   (ocaml
-   (>= 4.14))))
+   (>= 5.2))))
 
 (package
  (name nofunc-stdmap)

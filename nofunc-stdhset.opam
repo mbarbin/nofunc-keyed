@@ -9,7 +9,7 @@ doc: "https://mbarbin.github.io/nofunc-keyed/"
 bug-reports: "https://github.com/mbarbin/nofunc-keyed/issues"
 depends: [
   "dune" {>= "3.20"}
-  "ocaml" {>= "4.14"}
+  "ocaml" {>= "5.2"}
   "nofunc-stdhtbl" {= version}
   "odoc" {with-doc}
 ]
