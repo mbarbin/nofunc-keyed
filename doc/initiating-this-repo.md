@@ -11,7 +11,7 @@ initiating process almost entirely deterministic and reproducible.
 In this document we describe precisely and technically the actual steps that
 were used.
 
-## First Step
+## Step 1
 
 The first step was to initiate the part of the repository that relates to the
 `map` and `set` data structures.
@@ -60,7 +60,7 @@ The first step was to initiate the part of the repository that relates to the
 
 12. Repeat steps 10 and 11 for the map0 module.
 
-## Second Step
+## Step 2
 
 The second step was to initiate the part of the repository that relates to the
 `hashtbl` data structure.
@@ -82,3 +82,16 @@ The second step was to initiate the part of the repository that relates to the
    d. Remove module type interfaces
    e. Remove the generic version
    f. Update the mli to match the implementation of the defunc functions.
+
+7. The interface of `hashtbl0.mli` is initiated from `Stdlib.Hashtbl.MakeSeeded`
+   but without the functor. We require a modexp argument everywhere needed.
+
+8. This steps adds new code to implement `hashtbl0.ml`. There are no functions
+   that operate on multiple tables so there is no runtime exception similar to
+   the stdmap.
+
+## Step 3
+
+1. Create a new module `Hashset` for hash sets based on `Hashtbl` using `unit`
+   as data. Adapt the interface and implementation to always have at most one
+   binding per element in the set (`add` performs a `replace`).
