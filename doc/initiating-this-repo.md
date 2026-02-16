@@ -57,3 +57,5 @@ The first step was to initiate the part of the repository that relates to the
     deterministic as possible. The functions operating on one tree should be
     built with a simple alias helper, while functions operations on multiple
     trees must raise when operating on incompatible inputs.
+
+12. Repeat steps 10 and 11 for the map0 module.
