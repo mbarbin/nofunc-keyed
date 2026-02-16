@@ -22,7 +22,7 @@
     Because most operations on a hash table modify their input, they're more
     commonly used in imperative code. The lookup of the value associated with a
     key (see {!find}, {!find_opt}) is normally very fast, often faster than the
-    equivalent lookup in {!Map}.
+    equivalent lookup in [Map].
 
     The functors {!Make} and {!MakeSeeded} can be used when performance or
     flexibility are key. The user provides custom equality and hash functions
@@ -52,7 +52,7 @@ unsynchronized_access
 
 (** Unsynchronized accesses to a hash table may lead to an invalid hash table
     state. Thus, concurrent accesses to a hash tables must be synchronized (for
-    instance with a {!Mutex.t}). *)
+    instance with a [Mutex.t]). *)
 
 (** {1 Generic interface} *)
 
@@ -236,9 +236,9 @@ val rebuild :
     tables; see {!create} for more information.
 
     {!rebuild} can safely be used to import a hash table built by an old version
-    of the {!Hashtbl} module, then marshaled to persistent storage. After
+    of the [Hashtbl] module, then marshaled to persistent storage. After
     unmarshaling, apply {!rebuild} to produce a hash table for the current
-    version of the {!Hashtbl} module.
+    version of the [Hashtbl] module.
 
     @since 4.12 *)
 
@@ -341,7 +341,7 @@ module type HashedType = sig
       - ([(=)], {!hash}) for comparing objects by structure (provided objects do
         not contain floats)
       - ([(fun x y -> compare x y = 0)], {!hash}) for comparing objects by
-        structure and handling {!Stdlib.nan} correctly
+        structure and handling [Stdlib.nan] correctly
       - ([(==)], {!hash}) for comparing objects by physical equality (e.g. for
         mutable or cyclic objects). *)
 end
@@ -429,7 +429,7 @@ module type SeededHashedType = sig
   (** A seeded hashing function on keys. The first argument is the seed. It must
       be the case that if [equal x y] is true, then
       [seeded_hash seed x = seeded_hash seed y] for any value of [seed]. A
-      suitable choice for [seeded_hash] is the function {!Hashtbl.seeded_hash}
+      suitable choice for [seeded_hash] is the function [Hashtbl.seeded_hash]
       below. *)
 end
 
@@ -497,7 +497,7 @@ end
     argument [H] instead of generic equality and hashing. The [create] operation
     of the result structure supports the [~random] optional parameter and
     returns randomized hash tables if [~random:true] is passed or if
-    randomization is globally on (see {!Hashtbl.randomize}).
+    randomization is globally on (see [Hashtbl.randomize]).
     @since 4.00 *)
 module MakeSeeded (H : SeededHashedType) : SeededS with type key = H.t
 
@@ -570,7 +570,7 @@ val seeded_hash_param : int -> int -> int -> 'a -> int
 
     {2 Counting Elements}
 
-    Given a sequence of elements (here, a {!Seq.t}), we want to count how many
+    Given a sequence of elements (here, a [Seq.t]), we want to count how many
     times each distinct element occurs in the sequence. A simple way to do this,
     assuming the elements are comparable and hashable, is to use a hash table
     that maps elements to their number of occurrences.

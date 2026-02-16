@@ -71,4 +71,4 @@ The second step was to initiate the part of the repository that relates to the
 
 3. Auto-fmt the code using the `conventional` profile of `ocamlformat`.
 
-4. Silence warnings 9 and build the repo.
+4. Silence warnings 9 and build the repo. Fix odoc warnings.
