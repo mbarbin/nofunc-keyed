@@ -4,6 +4,8 @@
 (*  SPDX-License-Identifier: LGPL-2.1-or-later WITH OCaml-LGPL-linking-exception   *)
 (***********************************************************************************)
 
+module Dyn = Dyn
+
 let print pp = Format.printf "%a@." Pp.to_fmt pp
 let print_dyn dyn = print (Dyn.pp dyn)
 let phys_equal a b = a == b

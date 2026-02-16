@@ -6,8 +6,11 @@
 
 module Set = Nofunc_stdset.Set
 
-let%expect_test "" =
-  ignore Set.empty;
+let%expect_test "empty" =
+  let e = Set.empty (module Int) in
+  require (Set.is_empty e);
   [%expect {||}];
+  print_dyn (Set.cardinal e |> Dyn.int);
+  [%expect {| 0 |}];
   ()
 ;;

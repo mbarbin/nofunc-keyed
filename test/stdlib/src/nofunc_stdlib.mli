@@ -4,6 +4,8 @@
 (*_  SPDX-License-Identifier: LGPL-2.1-or-later WITH OCaml-LGPL-linking-exception   *)
 (*_**********************************************************************************)
 
+module Dyn = Dyn
+
 val print_dyn : Dyn.t -> unit
 val phys_equal : 'a -> 'a -> bool
 val require : bool -> unit
