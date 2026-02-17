@@ -1,5 +1,8 @@
 # nofunc-keyed
 
+[![CI Status](https://github.com/mbarbin/nofunc-keyed/workflows/ci/badge.svg)](https://github.com/mbarbin/nofunc-keyed/actions/workflows/ci.yml)
+[![Coverage Status](https://coveralls.io/repos/github/mbarbin/nofunc-keyed/badge.svg?branch=main)](https://coveralls.io/github/mbarbin/nofunc-keyed?branch=main)
+
 ## Introduction
 
 This repo implements OCaml packages for common data structures with elements used as keys:
