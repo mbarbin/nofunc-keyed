@@ -19,7 +19,8 @@
 
 (package
  (name nofunc-keyed)
- (synopsis "Meta empty package needed by some tools to make things work - NOT PUBLISHED")
+ (synopsis
+  "Meta empty package needed by some tools to make things work - NOT PUBLISHED")
  (allow_empty))
 
 (package
