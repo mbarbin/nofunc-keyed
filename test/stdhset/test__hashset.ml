@@ -6,13 +6,6 @@
 
 module Hashset = Nofunc_stdhset.Hashset
 
-module Int_elt = struct
-  type t = int
-
-  let equal = Int.equal
-  let hash = Stdlib.Hashtbl.hash
-end
-
 let sorted_elements set =
   Hashset.fold (fun x acc -> x :: acc) set [] |> List.sort Int.compare
 ;;
@@ -20,14 +13,14 @@ let sorted_elements set =
 let print_elements set = print_dyn (sorted_elements set |> Dyn.list Dyn.int)
 
 let%expect_test "create / length" =
-  let set = Hashset.create (module Int_elt) 16 in
+  let set = Hashset.create (module Int) 16 in
   print_dyn (Hashset.length set |> Dyn.int);
   [%expect {| 0 |}];
   ()
 ;;
 
 let%expect_test "add / mem / length" =
-  let set = Hashset.create (module Int_elt) 16 in
+  let set = Hashset.create (module Int) 16 in
   Hashset.add set 1;
   Hashset.add set 2;
   Hashset.add set 3;
@@ -43,7 +36,7 @@ let%expect_test "add / mem / length" =
 ;;
 
 let%expect_test "add is idempotent" =
-  let set = Hashset.create (module Int_elt) 16 in
+  let set = Hashset.create (module Int) 16 in
   Hashset.add set 1;
   Hashset.add set 1;
   Hashset.add set 1;
@@ -53,7 +46,7 @@ let%expect_test "add is idempotent" =
 ;;
 
 let%expect_test "remove" =
-  let set = Hashset.create (module Int_elt) 16 in
+  let set = Hashset.create (module Int) 16 in
   Hashset.add set 1;
   Hashset.add set 2;
   Hashset.add set 3;
@@ -67,8 +60,21 @@ let%expect_test "remove" =
   ()
 ;;
 
+let%expect_test "add multi ; remove once" =
+  let set = Hashset.create (module Int) 16 in
+  Hashset.add set 1;
+  Hashset.add set 1;
+  Hashset.add set 2;
+  print_elements set;
+  [%expect {| [ 1; 2 ] |}];
+  Hashset.remove set 1;
+  print_elements set;
+  [%expect {| [ 2 ] |}];
+  ()
+;;
+
 let%expect_test "clear" =
-  let set = Hashset.create (module Int_elt) 16 in
+  let set = Hashset.create (module Int) 16 in
   Hashset.add set 1;
   Hashset.add set 2;
   Hashset.clear set;
@@ -80,7 +86,7 @@ let%expect_test "clear" =
 ;;
 
 let%expect_test "reset" =
-  let set = Hashset.create (module Int_elt) 16 in
+  let set = Hashset.create (module Int) 16 in
   Hashset.add set 1;
   Hashset.add set 2;
   Hashset.reset set;
@@ -92,7 +98,7 @@ let%expect_test "reset" =
 ;;
 
 let%expect_test "copy" =
-  let set = Hashset.create (module Int_elt) 16 in
+  let set = Hashset.create (module Int) 16 in
   Hashset.add set 1;
   Hashset.add set 2;
   let set2 = Hashset.copy set in
@@ -107,7 +113,7 @@ let%expect_test "copy" =
 ;;
 
 let%expect_test "iter" =
-  let set = Hashset.create (module Int_elt) 16 in
+  let set = Hashset.create (module Int) 16 in
   Hashset.add set 3;
   Hashset.add set 1;
   Hashset.add set 2;
@@ -120,7 +126,7 @@ let%expect_test "iter" =
 ;;
 
 let%expect_test "fold" =
-  let set = Hashset.create (module Int_elt) 16 in
+  let set = Hashset.create (module Int) 16 in
   Hashset.add set 1;
   Hashset.add set 2;
   Hashset.add set 3;
@@ -131,7 +137,7 @@ let%expect_test "fold" =
 ;;
 
 let%expect_test "filter_inplace" =
-  let set = Hashset.create (module Int_elt) 16 in
+  let set = Hashset.create (module Int) 16 in
   Hashset.add set 1;
   Hashset.add set 2;
   Hashset.add set 3;
@@ -145,7 +151,7 @@ let%expect_test "filter_inplace" =
 ;;
 
 let%expect_test "to_seq" =
-  let set = Hashset.create (module Int_elt) 16 in
+  let set = Hashset.create (module Int) 16 in
   Hashset.add set 3;
   Hashset.add set 1;
   Hashset.add set 2;
@@ -156,7 +162,7 @@ let%expect_test "to_seq" =
 ;;
 
 let%expect_test "add_seq" =
-  let set = Hashset.create (module Int_elt) 16 in
+  let set = Hashset.create (module Int) 16 in
   Hashset.add_seq set (List.to_seq [ 1; 2; 3; 2; 1 ]);
   print_elements set;
   [%expect {| [ 1; 2; 3 ] |}];
@@ -164,14 +170,14 @@ let%expect_test "add_seq" =
 ;;
 
 let%expect_test "of_seq" =
-  let set = Hashset.of_seq (module Int_elt) (List.to_seq [ 5; 3; 1; 3; 5 ]) in
+  let set = Hashset.of_seq (module Int) (List.to_seq [ 5; 3; 1; 3; 5 ]) in
   print_elements set;
   [%expect {| [ 1; 3; 5 ] |}];
   ()
 ;;
 
 let%expect_test "stats" =
-  let set = Hashset.create (module Int_elt) 16 in
+  let set = Hashset.create (module Int) 16 in
   Hashset.add set 1;
   Hashset.add set 2;
   let stats = Hashset.stats set in
@@ -179,5 +185,22 @@ let%expect_test "stats" =
   [%expect {| 2 |}];
   require (stats.num_buckets > 0);
   [%expect {||}];
+  ()
+;;
+
+let%expect_test "create_seeded" =
+  let set = Hashset.create_seeded (module Int) 16 in
+  Hashset.add set 1;
+  Hashset.add set 2;
+  Hashset.add set 3;
+  print_elements set;
+  [%expect {| [ 1; 2; 3 ] |}];
+  ()
+;;
+
+let%expect_test "of_seq_seeded" =
+  let set = Hashset.of_seq_seeded (module Int) (List.to_seq [ 5; 3; 1; 3; 5 ]) in
+  print_elements set;
+  [%expect {| [ 1; 3; 5 ] |}];
   ()
 ;;

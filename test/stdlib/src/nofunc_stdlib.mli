@@ -11,6 +11,17 @@ val phys_equal : 'a -> 'a -> bool
 val require : bool -> unit
 val require_does_raise : (unit -> 'a) -> unit
 
+module Int : sig
+  include module type of struct
+    include Stdlib.Int
+  end
+
+  val equal : t -> t -> bool
+  val hash : t -> int
+  val seeded_hash : int -> t -> int
+  val to_dyn : t -> Dyn.t
+end
+
 module With_equal_and_dyn : sig
   module type S = sig
     type t
