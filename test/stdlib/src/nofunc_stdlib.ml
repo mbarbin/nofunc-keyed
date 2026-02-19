@@ -9,6 +9,16 @@ module Dyn = Dyn
 let print pp = Format.printf "%a@." Pp.to_fmt pp
 let print_dyn dyn = print (Dyn.pp dyn)
 let phys_equal a b = a == b
+
+module Int = struct
+  include Stdlib.Int
+
+  let equal = Int.equal
+  let hash = Stdlib.Hashtbl.hash
+  let seeded_hash = Stdlib.Hashtbl.seeded_hash
+  let to_dyn = Dyn.int
+end
+
 let require cond = if not cond then failwith "Required condition does not hold."
 
 let require_does_raise f =
