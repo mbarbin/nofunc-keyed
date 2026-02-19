@@ -18,6 +18,11 @@
 (implicit_transitive_deps false-if-hidden-includes-supported)
 
 (package
+ (name nofunc-keyed)
+ (synopsis "Meta empty package needed by some tools to make things work - NOT PUBLISHED")
+ (allow_empty))
+
+(package
  (name nofunc-stdhset)
  (synopsis "Hashset implemented from nofunc Hashtbl")
  (depends
