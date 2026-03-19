@@ -251,9 +251,7 @@ val filter_map : ('key -> 'a -> 'b option) -> ('key, 'a) t -> ('key, 'b) t
 
     For example, the following function on maps whose values are lists
     {[
-      filter_map
-        (fun _k li -> match li with [] -> None | _ :: tl -> Some tl)
-        m
+    filter_map (fun _k li -> match li with [] -> None | _ :: tl -> Some tl) m
     ]}
     drops all bindings of [m] whose value is an empty list, and pops the first
     element of each value that is non-empty.

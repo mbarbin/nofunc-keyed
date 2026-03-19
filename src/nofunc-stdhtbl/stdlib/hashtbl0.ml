@@ -196,11 +196,13 @@ let iter f h =
     raise exn
 
 let rec filter_map_inplace_bucket f h i prec = function
-  | Empty -> begin
-      match prec with Empty -> h.data.(i) <- Empty | Cons c -> c.next <- Empty
-    end
-  | Cons ({ key; data; next } as c) as slot -> begin
-      match f key data with
+  | Empty ->
+      begin match prec with
+      | Empty -> h.data.(i) <- Empty
+      | Cons c -> c.next <- Empty
+      end
+  | Cons ({ key; data; next } as c) as slot ->
+      begin match f key data with
       | None ->
           h.size <- h.size - 1;
           filter_map_inplace_bucket f h i prec next
@@ -211,7 +213,7 @@ let rec filter_map_inplace_bucket f h i prec = function
           end;
           c.data <- data;
           filter_map_inplace_bucket f h i slot next
-    end
+      end
 
 let filter_map_inplace f h =
   let d = h.data in

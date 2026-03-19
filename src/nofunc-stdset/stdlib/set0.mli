@@ -200,7 +200,7 @@ val filter_map :
 
     For example,
     {[
-      filter_map (fun n -> if n mod 2 = 0 then Some (n / 2) else None) s
+    filter_map (fun n -> if n mod 2 = 0 then Some (n / 2) else None) s
     ]}
     is the set of halves of the even elements of [s].
 

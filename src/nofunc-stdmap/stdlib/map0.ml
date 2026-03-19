@@ -59,30 +59,30 @@ let singleton x d = Node { l = Empty; v = x; d; r = Empty; h = 1 }
 let bal l x d r =
   let hl = match l with Empty -> 0 | Node { h } -> h in
   let hr = match r with Empty -> 0 | Node { h } -> h in
-  if hl > hr + 2 then begin
-    match l with
+  if hl > hr + 2 then
+    begin match l with
     | Empty -> invalid_arg "Map.bal"
     | Node { l = ll; v = lv; d = ld; r = lr } ->
         if height ll >= height lr then create ll lv ld (create lr x d r)
-        else begin
-          match lr with
+        else
+          begin match lr with
           | Empty -> invalid_arg "Map.bal"
           | Node { l = lrl; v = lrv; d = lrd; r = lrr } ->
               create (create ll lv ld lrl) lrv lrd (create lrr x d r)
-        end
-  end
-  else if hr > hl + 2 then begin
-    match r with
+          end
+    end
+  else if hr > hl + 2 then
+    begin match r with
     | Empty -> invalid_arg "Map.bal"
     | Node { l = rl; v = rv; d = rd; r = rr } ->
         if height rr >= height rl then create (create l x d rl) rv rd rr
-        else begin
-          match rl with
+        else
+          begin match rl with
           | Empty -> invalid_arg "Map.bal"
           | Node { l = rll; v = rlv; d = rld; r = rlr } ->
               create (create l x d rll) rlv rld (create rlr rv rd rr)
-        end
-  end
+          end
+    end
   else Node { l; v = x; d; r; h = (if hl >= hr then hl + 1 else hr + 1) }
 
 let empty = Empty
@@ -207,19 +207,19 @@ let rec remove ~compare x = function
         if r == rr then m else bal l v d rr
 
 let rec update ~compare x f = function
-  | Empty -> begin
-      match f None with
+  | Empty ->
+      begin match f None with
       | None -> Empty
       | Some data -> Node { l = Empty; v = x; d = data; r = Empty; h = 1 }
-    end
+      end
   | Node { l; v; d; r; h } as m ->
       let c = compare x v in
-      if c = 0 then begin
-        match f (Some d) with
+      if c = 0 then
+        begin match f (Some d) with
         | None -> merge l r
         | Some data ->
             if d == data then m else Node { l; v = x; d = data; r; h }
-      end
+        end
       else if c < 0 then
         let ll = update ~compare x f l in
         if l == ll then m else bal ll v d r
@@ -464,11 +464,11 @@ let to_seq_from ~compare low m =
   let rec aux ~compare low m c =
     match m with
     | Empty -> c
-    | Node { l; v; d; r; _ } -> begin
-        match compare v low with
+    | Node { l; v; d; r; _ } ->
+        begin match compare v low with
         | 0 -> More (v, d, r, c)
         | n when n < 0 -> aux ~compare low r c
         | _ -> aux ~compare low l (More (v, d, r, c))
-      end
+        end
   in
   seq_of_enum_ (aux ~compare low m End)

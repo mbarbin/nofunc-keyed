@@ -67,30 +67,30 @@ let create l v r =
 let bal l v r =
   let hl = match l with Empty -> 0 | Node { h } -> h in
   let hr = match r with Empty -> 0 | Node { h } -> h in
-  if hl > hr + 2 then begin
-    match l with
+  if hl > hr + 2 then
+    begin match l with
     | Empty -> invalid_arg "Set.bal"
     | Node { l = ll; v = lv; r = lr } ->
         if height ll >= height lr then create ll lv (create lr v r)
-        else begin
-          match lr with
+        else
+          begin match lr with
           | Empty -> invalid_arg "Set.bal"
           | Node { l = lrl; v = lrv; r = lrr } ->
               create (create ll lv lrl) lrv (create lrr v r)
-        end
-  end
-  else if hr > hl + 2 then begin
-    match r with
+          end
+    end
+  else if hr > hl + 2 then
+    begin match r with
     | Empty -> invalid_arg "Set.bal"
     | Node { l = rl; v = rv; r = rr } ->
         if height rr >= height rl then create (create l v rl) rv rr
-        else begin
-          match rl with
+        else
+          begin match rl with
           | Empty -> invalid_arg "Set.bal"
           | Node { l = rll; v = rlv; r = rlr } ->
               create (create l v rll) rlv (create rlr rv rr)
-        end
-  end
+          end
+    end
   else Node { l; v; r; h = (if hl >= hr then hl + 1 else hr + 1) }
 
 (* Insertion of one element *)
@@ -539,11 +539,11 @@ let to_seq_from ~compare low s =
   let rec aux ~compare low s c =
     match s with
     | Empty -> c
-    | Node { l; r; v; _ } -> begin
-        match compare v low with
+    | Node { l; r; v; _ } ->
+        begin match compare v low with
         | 0 -> More (v, r, c)
         | n when n < 0 -> aux ~compare low r c
         | _ -> aux ~compare low l (More (v, r, c))
-      end
+        end
   in
   seq_of_enum_ (aux ~compare low s End)
