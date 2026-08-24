@@ -64,7 +64,7 @@ end
 (** {1:maps Maps} *)
 
 (** The type of maps from type ['key] to type ['a]. *)
-type ('key, !+'a) t
+type (!'key, !+'a) t
 
 (** [empty (module Ord)] returns an empty map using [Ord.compare] for key
     ordering. *)
