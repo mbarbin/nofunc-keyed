@@ -49,7 +49,7 @@ type 'key compare = 'key -> 'key -> int
     positive if [e1] is greater than [e2]. Example: a suitable ordering function
     is the generic structural comparison function [Stdlib.compare]. *)
 
-type ('key, !+'a) t
+type (!'key, !+'a) t
 (** The type of maps from type ['key] to type ['a]. *)
 
 val empty : ('key, 'a) t
