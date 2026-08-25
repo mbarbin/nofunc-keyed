@@ -19,7 +19,12 @@
   - Remove the functor and signature. Make the type parametrized by the type of
   elements. Require [compare] everywhere needed.
 
-  - Require the [compare] argument to return [Ordering.t] instead of [int]. *)
+  - Require the [compare] argument to return [Ordering.t] instead of [int].
+
+  - Mark [bal]'s [invalid_arg] branches [@coverage off]: they guard against a
+  broken AVL invariant (a child empty when the height difference guarantees it
+  isn't); not tested, as they are not meant to be reached through this module's
+  public interface. *)
 
 (**************************************************************************)
 (*                                                                        *)
@@ -71,24 +76,24 @@ let bal l v r =
   let hr = match r with Empty -> 0 | Node { h } -> h in
   if hl > hr + 2 then
     begin match l with
-    | Empty -> invalid_arg "Set.bal"
+    | Empty -> invalid_arg "Set.bal" [@coverage off]
     | Node { l = ll; v = lv; r = lr } ->
         if height ll >= height lr then create ll lv (create lr v r)
         else
           begin match lr with
-          | Empty -> invalid_arg "Set.bal"
+          | Empty -> invalid_arg "Set.bal" [@coverage off]
           | Node { l = lrl; v = lrv; r = lrr } ->
               create (create ll lv lrl) lrv (create lrr v r)
           end
     end
   else if hr > hl + 2 then
     begin match r with
-    | Empty -> invalid_arg "Set.bal"
+    | Empty -> invalid_arg "Set.bal" [@coverage off]
     | Node { l = rl; v = rv; r = rr } ->
         if height rr >= height rl then create (create l v rl) rv rr
         else
           begin match rl with
-          | Empty -> invalid_arg "Set.bal"
+          | Empty -> invalid_arg "Set.bal" [@coverage off]
           | Node { l = rll; v = rlv; r = rlr } ->
               create (create l v rll) rlv (create rlr rv rr)
           end
