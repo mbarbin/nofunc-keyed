@@ -24,7 +24,11 @@
   - Mark [bal]'s [invalid_arg] branches [@coverage off]: they guard against a
   broken AVL invariant (a child empty when the height difference guarantees it
   isn't); not tested, as they are not meant to be reached through this module's
-  public interface. *)
+  public interface.
+
+  - Mark [remove_min_elt]'s [Empty] case [@coverage off], for the same reason:
+  every call site (in [merge] and [concat]) already pattern-matches its argument
+  as non-empty before calling it. *)
 
 (**************************************************************************)
 (*                                                                        *)
@@ -167,7 +171,7 @@ let rec max_elt_opt = function
 (* Remove the smallest element of the given set *)
 
 let rec remove_min_elt = function
-  | Empty -> invalid_arg "Set.remove_min_elt"
+  | Empty -> invalid_arg "Set.remove_min_elt" [@coverage off]
   | Node { l = Empty; r } -> r
   | Node { l; v; r } -> bal (remove_min_elt l) v r
 
