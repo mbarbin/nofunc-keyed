@@ -1,6 +1,7 @@
 (library
  (name nofunc_set)
  (public_name nofunc-set)
+ (flags :standard -w +a-4-40-41-42-44-45-48-66 -warn-error +a)
  (libraries dyn nofunc-set.stdlib ordering sexplib0)
  (instrumentation
   (backend bisect_ppx))

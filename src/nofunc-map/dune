@@ -1,6 +1,7 @@
 (library
  (name nofunc_map)
  (public_name nofunc-map)
+ (flags :standard -w +a-4-40-41-42-44-45-48-66 -warn-error +a)
  (libraries dyn nofunc-map.stdlib ordering sexplib0)
  (instrumentation
   (backend bisect_ppx))
