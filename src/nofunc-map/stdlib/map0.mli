@@ -15,7 +15,9 @@
   - format file with ocamlformat
 
   - Remove the functor and signature. Make the type parametrized by the type of
-  keys. Require [compare] everywhere needed. *)
+  keys. Require [compare] everywhere needed.
+
+  - Require the [compare] argument to return [Ordering.t] instead of [int]. *)
 
 (**************************************************************************)
 (*                                                                        *)
@@ -42,12 +44,11 @@
 
     For example: [Map.add ~compare:String.compare elt data map]. *)
 
-type 'key compare = 'key -> 'key -> int
+type 'key compare = 'key -> 'key -> Ordering.t
 (** A total ordering function over the keys. This is a two-argument function [f]
-    such that [f e1 e2] is zero if the keys [e1] and [e2] are equal, [f e1 e2]
-    is strictly negative if [e1] is smaller than [e2], and [f e1 e2] is strictly
-    positive if [e1] is greater than [e2]. Example: a suitable ordering function
-    is the generic structural comparison function [Stdlib.compare]. *)
+    such that [f e1 e2] is [Ordering.Eq] if the keys [e1] and [e2] are equal,
+    [f e1 e2] is [Ordering.Lt] if [e1] is smaller than [e2], and [f e1 e2] is
+    [Ordering.Gt] if [e1] is greater than [e2]. *)
 
 type (!'key, !+'a) t
 (** The type of maps from type ['key] to type ['a]. *)

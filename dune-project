@@ -44,14 +44,18 @@
  (synopsis "Map with an opinionated nofunc API (non-std)")
  (depends
   (ocaml
-   (>= 4.14))))
+   (>= 4.14))
+  (ordering
+   (>= 3.20))))
 
 (package
  (name nofunc-set)
  (synopsis "Set with an opinionated nofunc API (non-std)")
  (depends
   (ocaml
-   (>= 4.14))))
+   (>= 4.14))
+  (ordering
+   (>= 3.20))))
 
 (package
  (name nofunc-stdhset)
@@ -78,7 +82,9 @@
   (ocaml
    (>= 4.14))
   (nofunc-map
-   (= :version))))
+   (= :version))
+  (ordering
+   (>= 3.20))))
 
 (package
  (name nofunc-stdset)
@@ -87,7 +93,9 @@
   (ocaml
    (>= 4.14))
   (nofunc-set
-   (= :version))))
+   (= :version))
+  (ordering
+   (>= 3.20))))
 
 (package
  (name nofunc-keyed-dev)

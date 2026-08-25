@@ -17,7 +17,9 @@
   - disable warning 9 via directive
 
   - Remove the functor and signature. Make the type parametrized by the type of
-  elements. Require [compare] everywhere needed. *)
+  elements. Require [compare] everywhere needed.
+
+  - Require the [compare] argument to return [Ordering.t] instead of [int]. *)
 
 (**************************************************************************)
 (*                                                                        *)
@@ -42,7 +44,7 @@
 let compare = `shadow_stdlib_compare
 let _ = compare
 
-type 'elt compare = 'elt -> 'elt -> int
+type 'elt compare = 'elt -> 'elt -> Ordering.t
 type 'elt t = Empty | Node of { l : 'elt t; v : 'elt; r : 'elt t; h : int }
 
 (* Sets are represented by balanced binary trees (the heights of the children
@@ -95,17 +97,17 @@ let bal l v r =
 
 (* Insertion of one element *)
 
-let rec add ~compare x = function
+let rec add ~(compare : _ compare) x = function
   | Empty -> Node { l = Empty; v = x; r = Empty; h = 1 }
-  | Node { l; v; r } as t ->
-      let c = compare x v in
-      if c = 0 then t
-      else if c < 0 then
-        let ll = add ~compare x l in
-        if l == ll then t else bal ll v r
-      else
-        let rr = add ~compare x r in
-        if r == rr then t else bal l v rr
+  | Node { l; v; r } as t -> (
+      match compare x v with
+      | Eq -> t
+      | Lt ->
+          let ll = add ~compare x l in
+          if l == ll then t else bal ll v r
+      | Gt ->
+          let rr = add ~compare x r in
+          if r == rr then t else bal l v rr)
 
 let singleton x = Node { l = Empty; v = x; r = Empty; h = 1 }
 
@@ -187,17 +189,17 @@ let concat t1 t2 =
    present is false if s contains no element equal to x, or true if s contains
    an element equal to x. *)
 
-let rec split ~compare x = function
+let rec split ~(compare : _ compare) x = function
   | Empty -> (Empty, false, Empty)
-  | Node { l; v; r } ->
-      let c = compare x v in
-      if c = 0 then (l, true, r)
-      else if c < 0 then
-        let ll, pres, rl = split ~compare x l in
-        (ll, pres, join rl v r)
-      else
-        let lr, pres, rr = split ~compare x r in
-        (join l v lr, pres, rr)
+  | Node { l; v; r } -> (
+      match compare x v with
+      | Eq -> (l, true, r)
+      | Lt ->
+          let ll, pres, rl = split ~compare x l in
+          (ll, pres, join rl v r)
+      | Gt ->
+          let lr, pres, rr = split ~compare x r in
+          (join l v lr, pres, rr))
 
 (* Implementation of the set operations *)
 
@@ -208,23 +210,25 @@ let is_singleton = function
   | Node { l = Empty; r = Empty } -> true
   | Empty | Node _ -> false
 
-let rec mem ~compare x = function
+let rec mem ~(compare : _ compare) x = function
   | Empty -> false
-  | Node { l; v; r } ->
-      let c = compare x v in
-      c = 0 || mem ~compare x (if c < 0 then l else r)
+  | Node { l; v; r } -> (
+      match compare x v with
+      | Eq -> true
+      | Lt -> mem ~compare x l
+      | Gt -> mem ~compare x r)
 
-let rec remove ~compare x = function
+let rec remove ~(compare : _ compare) x = function
   | Empty -> Empty
-  | Node { l; v; r } as t ->
-      let c = compare x v in
-      if c = 0 then merge l r
-      else if c < 0 then
-        let ll = remove ~compare x l in
-        if l == ll then t else bal ll v r
-      else
-        let rr = remove ~compare x r in
-        if r == rr then t else bal l v rr
+  | Node { l; v; r } as t -> (
+      match compare x v with
+      | Eq -> merge l r
+      | Lt ->
+          let ll = remove ~compare x l in
+          if l == ll then t else bal ll v r
+      | Gt ->
+          let rr = remove ~compare x r in
+          if r == rr then t else bal l v rr)
 
 let rec union ~compare s1 s2 =
   match (s1, s2) with
@@ -258,19 +262,19 @@ let rec inter ~compare s1 s2 =
 
 type 'elt split_bis = Found | NotFound of 'elt t * (unit -> 'elt t)
 
-let rec split_bis ~compare x = function
+let rec split_bis ~(compare : _ compare) x = function
   | Empty -> NotFound (Empty, fun () -> Empty)
   | Node { l; v; r; _ } -> (
-      let c = compare x v in
-      if c = 0 then Found
-      else if c < 0 then
-        match split_bis ~compare x l with
-        | Found -> Found
-        | NotFound (ll, rl) -> NotFound (ll, fun () -> join (rl ()) v r)
-      else
-        match split_bis ~compare x r with
-        | Found -> Found
-        | NotFound (lr, rr) -> NotFound (join l v lr, rr))
+      match compare x v with
+      | Eq -> Found
+      | Lt -> (
+          match split_bis ~compare x l with
+          | Found -> Found
+          | NotFound (ll, rl) -> NotFound (ll, fun () -> join (rl ()) v r))
+      | Gt -> (
+          match split_bis ~compare x r with
+          | Found -> Found
+          | NotFound (lr, rr) -> NotFound (join l v lr, rr)))
 
 let rec disjoint ~compare s1 s2 =
   match (s1, s2) with
@@ -297,13 +301,13 @@ type 'elt enumeration = End | More of 'elt * 'elt t * 'elt enumeration
 let rec cons_enum s e =
   match s with Empty -> e | Node { l; v; r } -> cons_enum l (More (v, r, e))
 
-let rec compare_aux ~compare e1 e2 =
+let rec compare_aux ~(compare : _ compare) e1 e2 =
   match (e1, e2) with
   | End, End -> 0
   | End, _ -> -1
   | _, End -> 1
   | More (v1, r1, e1), More (v2, r2, e2) ->
-      let c = compare v1 v2 in
+      let c = Ordering.to_int (compare v1 v2) in
       if c <> 0 then c
       else compare_aux ~compare (cons_enum r1 e1) (cons_enum r2 e2)
 
@@ -312,19 +316,20 @@ let compare ~compare s1 s2 =
 
 let equal ~compare:cmp s1 s2 = compare ~compare:cmp s1 s2 = 0
 
-let rec subset ~compare s1 s2 =
+let rec subset ~(compare : _ compare) s1 s2 =
   match (s1, s2) with
   | Empty, _ -> true
   | _, Empty -> false
-  | Node { l = l1; v = v1; r = r1 }, (Node { l = l2; v = v2; r = r2 } as t2) ->
-      let c = compare v1 v2 in
-      if c = 0 then subset ~compare l1 l2 && subset ~compare r1 r2
-      else if c < 0 then
-        subset ~compare (Node { l = l1; v = v1; r = Empty; h = 0 }) l2
-        && subset ~compare r1 t2
-      else
-        subset ~compare (Node { l = Empty; v = v1; r = r1; h = 0 }) r2
-        && subset ~compare l1 t2
+  | Node { l = l1; v = v1; r = r1 }, (Node { l = l2; v = v2; r = r2 } as t2)
+    -> (
+      match compare v1 v2 with
+      | Eq -> subset ~compare l1 l2 && subset ~compare r1 r2
+      | Lt ->
+          subset ~compare (Node { l = l1; v = v1; r = Empty; h = 0 }) l2
+          && subset ~compare r1 t2
+      | Gt ->
+          subset ~compare (Node { l = Empty; v = v1; r = r1; h = 0 }) r2
+          && subset ~compare l1 t2)
 
 let rec iter f = function
   | Empty -> ()
@@ -377,11 +382,13 @@ let elements s = elements_aux [] s
 let choose = min_elt
 let choose_opt = min_elt_opt
 
-let rec find ~compare x = function
+let rec find ~(compare : _ compare) x = function
   | Empty -> raise Not_found
-  | Node { l; v; r } ->
-      let c = compare x v in
-      if c = 0 then v else find ~compare x (if c < 0 then l else r)
+  | Node { l; v; r } -> (
+      match compare x v with
+      | Eq -> v
+      | Lt -> find ~compare x l
+      | Gt -> find ~compare x r)
 
 let rec find_first_aux v0 f = function
   | Empty -> v0
@@ -421,19 +428,20 @@ let rec find_last_opt f = function
   | Node { l; v; r } ->
       if f v then find_last_opt_aux v f r else find_last_opt f l
 
-let rec find_opt ~compare x = function
+let rec find_opt ~(compare : _ compare) x = function
   | Empty -> None
-  | Node { l; v; r } ->
-      let c = compare x v in
-      if c = 0 then Some v else find_opt ~compare x (if c < 0 then l else r)
+  | Node { l; v; r } -> (
+      match compare x v with
+      | Eq -> Some v
+      | Lt -> find_opt ~compare x l
+      | Gt -> find_opt ~compare x r)
 
-let try_join ~compare l v r =
+let try_join ~(compare : _ compare) l v r =
   (* [join l v r] can only be called when (elements of l < v < elements of r);
      use [try_join l v r] when this property may not hold, but you hope it does
      hold in the common case *)
-  if
-    (l = Empty || compare (max_elt l) v < 0)
-    && (r = Empty || compare v (min_elt r) < 0)
+  let is_lt a b = match compare a b with Lt -> true | Eq | Gt -> false in
+  if (l = Empty || is_lt (max_elt l) v) && (r = Empty || is_lt v (min_elt r))
   then join l v r
   else union ~compare l (add ~compare v r)
 
@@ -513,7 +521,9 @@ let of_list ~compare l =
   | [ x0; x1; x2; x3; x4 ] ->
       add ~compare x4
         (add ~compare x3 (add ~compare x2 (add ~compare x1 (singleton x0))))
-  | _ -> of_sorted_list (List.sort_uniq compare l)
+  | _ ->
+      of_sorted_list
+        (List.sort_uniq (fun a b -> Ordering.to_int (compare a b)) l)
 
 let add_seq ~compare i m = Seq.fold_left (fun s x -> add ~compare x s) m i
 let of_seq ~compare i = add_seq ~compare i empty
@@ -535,15 +545,15 @@ let rec rev_seq_of_enum_ c () =
 
 let to_rev_seq c = rev_seq_of_enum_ (snoc_enum c End)
 
-let to_seq_from ~compare low s =
-  let rec aux ~compare low s c =
+let to_seq_from ~(compare : _ compare) low s =
+  let rec aux ~(compare : _ compare) low s c =
     match s with
     | Empty -> c
     | Node { l; r; v; _ } ->
         begin match compare v low with
-        | 0 -> More (v, r, c)
-        | n when n < 0 -> aux ~compare low r c
-        | _ -> aux ~compare low l (More (v, r, c))
+        | Eq -> More (v, r, c)
+        | Lt -> aux ~compare low r c
+        | Gt -> aux ~compare low l (More (v, r, c))
         end
   in
   seq_of_enum_ (aux ~compare low s End)

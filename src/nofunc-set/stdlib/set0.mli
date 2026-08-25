@@ -15,7 +15,9 @@
   - Format file with ocamlformat
 
   - Remove the functor and signature. Make the type parametrized by the type of
-  elements. Require [compare] everywhere needed. *)
+  elements. Require [compare] everywhere needed.
+
+  - Require the [compare] argument to return [Ordering.t] instead of [int]. *)
 
 (**************************************************************************)
 (*                                                                        *)
@@ -42,13 +44,11 @@
 
     For example: [Set.add ~compare:String.compare e s]. *)
 
-type 'elt compare = 'elt -> 'elt -> int
+type 'elt compare = 'elt -> 'elt -> Ordering.t
 (** A total ordering function over the set elements. This is a two-argument
-    function [f] such that [f e1 e2] is zero if the elements [e1] and [e2] are
-    equal, [f e1 e2] is strictly negative if [e1] is smaller than [e2], and
-    [f e1 e2] is strictly positive if [e1] is greater than [e2]. Example: a
-    suitable ordering function is the generic structural comparison function
-    [Stdlib.compare]. *)
+    function [f] such that [f e1 e2] is [Ordering.Eq] if the elements [e1] and
+    [e2] are equal, [f e1 e2] is [Ordering.Lt] if [e1] is smaller than [e2], and
+    [f e1 e2] is [Ordering.Gt] if [e1] is greater than [e2]. *)
 
 type 'elt t
 (** The type of sets of elements of type ['elt]. *)
