@@ -1,6 +1,6 @@
 (library
  (name hset_test)
- (package nofunc-keyed-dev)
+ (package nofunc-keyed-tests)
  (inline_tests)
  (flags
   :standard

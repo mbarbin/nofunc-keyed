@@ -118,16 +118,11 @@
    (>= 3.20))))
 
 (package
- (name nofunc-keyed-dev)
- (synopsis "Package to regroup dev targets, documentation, and more")
- (allow_empty)
+ (name nofunc-keyed-tests)
+ (synopsis "Tests for nofunc-keyed")
  (depends
   (ocaml
    (>= 5.2))
-  (ocamlformat
-   (= 0.29.0))
-  (bisect_ppx
-   (>= 2.8.3))
   (dyn
    (>= 3.20))
   (nofunc-hset
@@ -155,6 +150,36 @@
   (ppx_sexp_conv
    (>= v0.17))
   (sexplib0
-   (>= v0.16))
+   (>= v0.16))))
+
+(package
+ (name nofunc-keyed-dev)
+ (synopsis "Package to regroup dev targets, documentation, and more")
+ (allow_empty)
+ (depends
+  (ocaml
+   (>= 5.2))
+  (ocamlformat
+   (= 0.29.0))
+  (bisect_ppx
+   (>= 2.8.3))
+  (nofunc-hset
+   (= :version))
+  (nofunc-htbl
+   (= :version))
+  (nofunc-keyed-tests
+   (= :version))
+  (nofunc-map
+   (= :version))
+  (nofunc-set
+   (= :version))
+  (nofunc-stdhset
+   (= :version))
+  (nofunc-stdhtbl
+   (= :version))
+  (nofunc-stdmap
+   (= :version))
+  (nofunc-stdset
+   (= :version))
   (sherlodoc
    (>= 0.2))))
