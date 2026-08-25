@@ -398,20 +398,21 @@ let rec cons_enum m e =
   | Empty -> e
   | Node { l; v; d; r } -> cons_enum l (More (v, d, r, e))
 
-let compare ~compare:cmp_key cmp m1 m2 =
+let compare ~compare:(cmp_key : _ compare) cmp m1 m2 =
   let rec compare_aux e1 e2 =
     match (e1, e2) with
-    | End, End -> 0
-    | End, _ -> -1
-    | _, End -> 1
-    | More (v1, d1, r1, e1), More (v2, d2, r2, e2) ->
-        let c = Ordering.to_int (cmp_key v1 v2) in
-        if c <> 0 then c
-        else
-          let c = cmp d1 d2 in
-          if c <> 0 then c else compare_aux (cons_enum r1 e1) (cons_enum r2 e2)
+    | End, End -> Ordering.Eq
+    | End, _ -> Ordering.Lt
+    | _, End -> Ordering.Gt
+    | More (v1, d1, r1, e1), More (v2, d2, r2, e2) -> (
+        match cmp_key v1 v2 with
+        | (Lt | Gt) as res -> res
+        | Eq -> (
+            match Ordering.of_int (cmp d1 d2) with
+            | (Lt | Gt) as res -> res
+            | Eq -> compare_aux (cons_enum r1 e1) (cons_enum r2 e2)))
   in
-  compare_aux (cons_enum m1 End) (cons_enum m2 End)
+  Ordering.to_int (compare_aux (cons_enum m1 End) (cons_enum m2 End))
 
 let equal ~compare:cmp_key cmp m1 m2 =
   let rec equal_aux e1 e2 =

@@ -303,16 +303,16 @@ let rec cons_enum s e =
 
 let rec compare_aux ~(compare : _ compare) e1 e2 =
   match (e1, e2) with
-  | End, End -> 0
-  | End, _ -> -1
-  | _, End -> 1
-  | More (v1, r1, e1), More (v2, r2, e2) ->
-      let c = Ordering.to_int (compare v1 v2) in
-      if c <> 0 then c
-      else compare_aux ~compare (cons_enum r1 e1) (cons_enum r2 e2)
+  | End, End -> Ordering.Eq
+  | End, _ -> Ordering.Lt
+  | _, End -> Ordering.Gt
+  | More (v1, r1, e1), More (v2, r2, e2) -> (
+      match compare v1 v2 with
+      | (Lt | Gt) as res -> res
+      | Eq -> compare_aux ~compare (cons_enum r1 e1) (cons_enum r2 e2))
 
 let compare ~compare s1 s2 =
-  compare_aux ~compare (cons_enum s1 End) (cons_enum s2 End)
+  Ordering.to_int (compare_aux ~compare (cons_enum s1 End) (cons_enum s2 End))
 
 let equal ~compare:cmp s1 s2 = compare ~compare:cmp s1 s2 = 0
 
