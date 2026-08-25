@@ -22,13 +22,13 @@ let empty (type elt) (module Ord : OrderedType with type t = elt) =
 ;;
 
 let with_tree t tree = if t.tree == tree then t else { compare = t.compare; tree }
-let add elt t = with_tree t (Tree.add ~compare:t.compare elt t.tree)
+let add t elt = with_tree t (Tree.add ~compare:t.compare elt t.tree)
 
 let singleton (type elt) (module Ord : OrderedType with type t = elt) elt =
   { compare = Ord.compare; tree = Tree.singleton elt }
 ;;
 
-let remove elt t = with_tree t (Tree.remove ~compare:t.compare elt t.tree)
+let remove t elt = with_tree t (Tree.remove ~compare:t.compare elt t.tree)
 
 let check_same_compare t1 t2 ~fct =
   if not (t1.compare == t2.compare)
@@ -68,31 +68,31 @@ let max_elt t = Tree.max_elt t.tree
 let max_elt_opt t = Tree.max_elt_opt t.tree
 let choose t = Tree.choose t.tree
 let choose_opt t = Tree.choose_opt t.tree
-let find elt t = Tree.find ~compare:t.compare elt t.tree
-let find_opt elt t = Tree.find_opt ~compare:t.compare elt t.tree
-let find_first f t = Tree.find_first f t.tree
-let find_first_opt f t = Tree.find_first_opt f t.tree
-let find_last f t = Tree.find_last f t.tree
-let find_last_opt f t = Tree.find_last_opt f t.tree
-let iter f t = Tree.iter f t.tree
-let fold f t init = Tree.fold f t.tree init
-let map f t = with_tree t (Tree.map ~compare:t.compare f t.tree)
-let filter f t = with_tree t (Tree.filter f t.tree)
-let filter_map f t = with_tree t (Tree.filter_map ~compare:t.compare f t.tree)
+let find t elt = Tree.find ~compare:t.compare elt t.tree
+let find_opt t elt = Tree.find_opt ~compare:t.compare elt t.tree
+let find_first t ~f = Tree.find_first f t.tree
+let find_first_opt t ~f = Tree.find_first_opt f t.tree
+let find_last t ~f = Tree.find_last f t.tree
+let find_last_opt t ~f = Tree.find_last_opt f t.tree
+let iter t ~f = Tree.iter f t.tree
+let fold t init ~f = Tree.fold (fun key acc -> f ~key acc) t.tree init
+let map t ~f = with_tree t (Tree.map ~compare:t.compare f t.tree)
+let filter t ~f = with_tree t (Tree.filter f t.tree)
+let filter_map t ~f = with_tree t (Tree.filter_map ~compare:t.compare f t.tree)
 
-let partition f t =
+let partition t ~f =
   let t_true, t_false = Tree.partition f t.tree in
   with_tree t t_true, with_tree t t_false
 ;;
 
-let split elt t =
+let split t elt =
   let left, present, right = Tree.split ~compare:t.compare elt t.tree in
   with_tree t left, present, with_tree t right
 ;;
 
 let is_empty t = Tree.is_empty t.tree
 let is_singleton t = Tree.is_singleton t.tree
-let mem elt t = Tree.mem ~compare:t.compare elt t.tree
+let mem t elt = Tree.mem ~compare:t.compare elt t.tree
 
 let equal t1 t2 =
   check_same_compare t1 t2 ~fct:"equal";
@@ -109,18 +109,18 @@ let subset t1 t2 =
   Tree.subset ~compare:t1.compare t1.tree t2.tree
 ;;
 
-let for_all f t = Tree.for_all f t.tree
-let exists f t = Tree.exists f t.tree
+let for_all t ~f = Tree.for_all f t.tree
+let exists t ~f = Tree.exists f t.tree
 let to_list t = Tree.to_list t.tree
 
 let of_list (type elt) (module Ord : OrderedType with type t = elt) l =
   { compare = Ord.compare; tree = Tree.of_list ~compare:Ord.compare l }
 ;;
 
-let to_seq_from elt t = Tree.to_seq_from ~compare:t.compare elt t.tree
+let to_seq_from t elt = Tree.to_seq_from ~compare:t.compare elt t.tree
 let to_seq t = Tree.to_seq t.tree
 let to_rev_seq t = Tree.to_rev_seq t.tree
-let add_seq seq t = with_tree t (Tree.add_seq ~compare:t.compare seq t.tree)
+let add_seq t seq = with_tree t (Tree.add_seq ~compare:t.compare seq t.tree)
 
 let of_seq (type elt) (module Ord : OrderedType with type t = elt) seq =
   { compare = Ord.compare; tree = Tree.of_seq ~compare:Ord.compare seq }

@@ -41,13 +41,13 @@ let%expect_test "singleton / is_singleton / elements / to_list" =
 
 let%expect_test "add / remove" =
   let s = Set.empty (module Int) in
-  let s = Set.add 1 s in
-  let s = Set.add 2 s in
+  let s = Set.add s 1 in
+  let s = Set.add s 2 in
   (* Re-adding an existing element is a no-op returning a physically equal set. *)
-  let s1 = Set.add 2 s in
+  let s1 = Set.add s 2 in
   require (phys_equal s s1);
   [%expect {||}];
-  let s = Set.remove 1 s in
+  let s = Set.remove s 1 in
   print_elements s;
   [%expect {| [ 2 ] |}];
   ()
@@ -57,28 +57,28 @@ let%expect_test "of_list / mem / find / find_opt" =
   let s = Set.of_list (module Int) [ 3; 1; 2; 1 ] in
   print_elements s;
   [%expect {| [ 1; 2; 3 ] |}];
-  print_dyn (Set.mem 2 s |> Dyn.bool);
+  print_dyn (Set.mem s 2 |> Dyn.bool);
   [%expect {| true |}];
-  print_dyn (Set.mem 4 s |> Dyn.bool);
+  print_dyn (Set.mem s 4 |> Dyn.bool);
   [%expect {| false |}];
-  print_dyn (Set.find 2 s |> Dyn.int);
+  print_dyn (Set.find s 2 |> Dyn.int);
   [%expect {| 2 |}];
-  require_does_raise (fun () -> Set.find 4 s);
+  require_does_raise (fun () -> Set.find s 4);
   [%expect {| Not_found |}];
-  print_dyn (Set.find_opt 4 s |> Dyn.option Dyn.int);
+  print_dyn (Set.find_opt s 4 |> Dyn.option Dyn.int);
   [%expect {| None |}];
   ()
 ;;
 
 let%expect_test "find_first / find_first_opt / find_last / find_last_opt" =
   let s = Set.of_list (module Int) [ 1; 2; 3 ] in
-  print_dyn (Set.find_first (fun x -> x >= 2) s |> Dyn.int);
+  print_dyn (Set.find_first s ~f:(fun x -> x >= 2) |> Dyn.int);
   [%expect {| 2 |}];
-  print_dyn (Set.find_first_opt (fun x -> x >= 99) s |> Dyn.option Dyn.int);
+  print_dyn (Set.find_first_opt s ~f:(fun x -> x >= 99) |> Dyn.option Dyn.int);
   [%expect {| None |}];
-  print_dyn (Set.find_last (fun x -> x <= 2) s |> Dyn.int);
+  print_dyn (Set.find_last s ~f:(fun x -> x <= 2) |> Dyn.int);
   [%expect {| 2 |}];
-  print_dyn (Set.find_last_opt (fun x -> x <= 0) s |> Dyn.option Dyn.int);
+  print_dyn (Set.find_last_opt s ~f:(fun x -> x <= 0) |> Dyn.option Dyn.int);
   [%expect {| None |}];
   ()
 ;;
@@ -103,31 +103,31 @@ let%expect_test "min_elt / max_elt / choose" =
 let%expect_test "iter / fold / for_all / exists" =
   let s = Set.of_list (module Int) [ 1; 2; 3 ] in
   let count = ref 0 in
-  Set.iter (fun _ -> incr count) s;
+  Set.iter s ~f:(fun _ -> incr count);
   print_dyn (!count |> Dyn.int);
   [%expect {| 3 |}];
-  let sum = Set.fold (fun x acc -> acc + x) s 0 in
+  let sum = Set.fold s 0 ~f:(fun ~key acc -> acc + key) in
   print_dyn (sum |> Dyn.int);
   [%expect {| 6 |}];
-  print_dyn (Set.for_all (fun x -> x > 0) s |> Dyn.bool);
+  print_dyn (Set.for_all s ~f:(fun x -> x > 0) |> Dyn.bool);
   [%expect {| true |}];
-  print_dyn (Set.exists (fun x -> x > 2) s |> Dyn.bool);
+  print_dyn (Set.exists s ~f:(fun x -> x > 2) |> Dyn.bool);
   [%expect {| true |}];
   ()
 ;;
 
 let%expect_test "map / filter / filter_map / partition" =
   let s = Set.of_list (module Int) [ 1; 2; 3 ] in
-  print_dyn (Set.map (fun x -> x * 10) s |> Set.elements |> Dyn.list Dyn.int);
+  print_dyn (Set.map s ~f:(fun x -> x * 10) |> Set.elements |> Dyn.list Dyn.int);
   [%expect {| [ 10; 20; 30 ] |}];
-  print_dyn (Set.filter (fun x -> x <> 2) s |> Set.elements |> Dyn.list Dyn.int);
+  print_dyn (Set.filter s ~f:(fun x -> x <> 2) |> Set.elements |> Dyn.list Dyn.int);
   [%expect {| [ 1; 3 ] |}];
   print_dyn
-    (Set.filter_map (fun x -> if x = 2 then None else Some (x * 100)) s
+    (Set.filter_map s ~f:(fun x -> if x = 2 then None else Some (x * 100))
      |> Set.elements
      |> Dyn.list Dyn.int);
   [%expect {| [ 100; 300 ] |}];
-  let t, f = Set.partition (fun x -> x <= 1) s in
+  let t, f = Set.partition s ~f:(fun x -> x <= 1) in
   print_dyn (Set.elements t |> Dyn.list Dyn.int);
   [%expect {| [ 1 ] |}];
   print_dyn (Set.elements f |> Dyn.list Dyn.int);
@@ -137,7 +137,7 @@ let%expect_test "map / filter / filter_map / partition" =
 
 let%expect_test "split" =
   let s = Set.of_list (module Int) [ 1; 2; 3 ] in
-  let l, present, r = Set.split 2 s in
+  let l, present, r = Set.split s 2 in
   print_dyn (Set.elements l |> Dyn.list Dyn.int);
   [%expect {| [ 1 ] |}];
   print_dyn (present |> Dyn.bool);
@@ -189,9 +189,9 @@ let%expect_test "to_seq / to_rev_seq / to_seq_from / add_seq / of_seq" =
   [%expect {| [ 1; 2; 3 ] |}];
   print_dyn (Set.to_rev_seq s |> List.of_seq |> Dyn.list Dyn.int);
   [%expect {| [ 3; 2; 1 ] |}];
-  print_dyn (Set.to_seq_from 2 s |> List.of_seq |> Dyn.list Dyn.int);
+  print_dyn (Set.to_seq_from s 2 |> List.of_seq |> Dyn.list Dyn.int);
   [%expect {| [ 2; 3 ] |}];
-  let s2 = Set.add_seq (List.to_seq [ 4 ]) s in
+  let s2 = Set.add_seq s (List.to_seq [ 4 ]) in
   print_elements s2;
   [%expect {| [ 1; 2; 3; 4 ] |}];
   let s3 = Set.of_seq (module Int) (List.to_seq [ 5; 6 ]) in

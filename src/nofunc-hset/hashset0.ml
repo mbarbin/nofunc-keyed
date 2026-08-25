@@ -11,17 +11,17 @@ type !'a t = ('a, unit) Hashtbl.t
 let clear = Hashtbl.clear
 let reset = Hashtbl.reset
 let copy = Hashtbl.copy
-let add t key = Hashtbl.replace t key ()
-let mem = Hashtbl.mem
-let remove = Hashtbl.remove
-let iter f t = Hashtbl.iter (fun x () -> f x) t
+let add t key = Hashtbl.replace t ~key ~data:()
+let mem t key = Hashtbl.mem t ~key
+let remove t key = Hashtbl.remove t ~key
+let iter t ~f = Hashtbl.iter t ~f:(fun x () -> f x)
 let some_unit = Some ()
 
-let filter_inplace f t =
-  Hashtbl.filter_map_inplace (fun x () -> if f x then some_unit else None) t
+let filter_inplace t ~f =
+  Hashtbl.filter_map_inplace t ~f:(fun x () -> if f x then some_unit else None)
 ;;
 
-let fold f t init = Hashtbl.fold (fun a () acc -> f a acc) t init
+let fold t init ~f = Hashtbl.fold t init ~f:(fun a () acc -> f a acc)
 let length = Hashtbl.length
 let stats = Hashtbl.stats
 let to_seq = Hashtbl.to_seq_keys

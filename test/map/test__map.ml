@@ -30,7 +30,7 @@ let%expect_test "empty / is_empty / is_singleton / cardinal" =
 ;;
 
 let%expect_test "singleton / is_singleton / bindings / to_list" =
-  let m = Map.singleton (module Int) 1 "one" in
+  let m = Map.singleton (module Int) ~key:1 ~data:"one" in
   require (Map.is_singleton m);
   [%expect {||}];
   print_bindings m;
@@ -42,28 +42,28 @@ let%expect_test "singleton / is_singleton / bindings / to_list" =
 
 let%expect_test "add / update / remove" =
   let m = Map.empty (module Int) in
-  let m = Map.add 1 "one" m in
-  let m = Map.add 2 "two" m in
+  let m = Map.add m ~key:1 ~data:"one" in
+  let m = Map.add m ~key:2 ~data:"two" in
   (* Re-adding the same key with a physically equal value is a no-op. *)
   let two = "two" in
-  let m1 = Map.add 2 two m in
-  let m2 = Map.add 2 two m1 in
+  let m1 = Map.add m ~key:2 ~data:two in
+  let m2 = Map.add m1 ~key:2 ~data:two in
   require (phys_equal m1 m2);
   [%expect {||}];
-  let m = Map.update 1 (fun v -> Option.map String.uppercase_ascii v) m in
-  print_binding (1, Map.find 1 m);
+  let m = Map.update m ~key:1 ~f:(fun v -> Option.map String.uppercase_ascii v) in
+  print_binding (1, Map.find m ~key:1);
   [%expect {| (1, "ONE") |}];
-  let m = Map.remove 2 m in
-  print_dyn (Map.mem 2 m |> Dyn.bool);
+  let m = Map.remove m ~key:2 in
+  print_dyn (Map.mem m ~key:2 |> Dyn.bool);
   [%expect {| false |}];
   ()
 ;;
 
 let%expect_test "add_to_list" =
   let m = Map.empty (module Int) in
-  let m = Map.add_to_list 3 "a" m in
-  let m = Map.add_to_list 3 "b" m in
-  print_dyn (Map.find 3 m |> Dyn.list Dyn.string);
+  let m = Map.add_to_list m ~key:3 ~data:"a" in
+  let m = Map.add_to_list m ~key:3 ~data:"b" in
+  print_dyn (Map.find m ~key:3 |> Dyn.list Dyn.string);
   [%expect {| [ "b"; "a" ] |}];
   ()
 ;;
@@ -72,30 +72,31 @@ let%expect_test "of_list / mem / find / find_opt" =
   let m = Map.of_list (module Int) [ 3, "three"; 1, "one"; 2, "two"; 1, "ONE" ] in
   print_bindings m;
   [%expect {| [ (1, "ONE"); (2, "two"); (3, "three") ] |}];
-  print_dyn (Map.mem 2 m |> Dyn.bool);
+  print_dyn (Map.mem m ~key:2 |> Dyn.bool);
   [%expect {| true |}];
-  print_dyn (Map.mem 4 m |> Dyn.bool);
+  print_dyn (Map.mem m ~key:4 |> Dyn.bool);
   [%expect {| false |}];
-  print_dyn (Map.find 2 m |> Dyn.string);
+  print_dyn (Map.find m ~key:2 |> Dyn.string);
   [%expect {| "two" |}];
-  require_does_raise (fun () -> Map.find 4 m);
+  require_does_raise (fun () -> Map.find m ~key:4);
   [%expect {| Not_found |}];
-  print_dyn (Map.find_opt 4 m |> Dyn.option Dyn.string);
+  print_dyn (Map.find_opt m ~key:4 |> Dyn.option Dyn.string);
   [%expect {| None |}];
   ()
 ;;
 
 let%expect_test "find_first / find_first_opt / find_last / find_last_opt" =
   let m = Map.of_list (module Int) [ 1, "one"; 2, "two"; 3, "three" ] in
-  print_binding (Map.find_first (fun k -> k >= 2) m);
+  print_binding (Map.find_first m ~f:(fun k -> k >= 2));
   [%expect {| (2, "two") |}];
   print_dyn
-    (Map.find_first_opt (fun k -> k >= 99) m |> Dyn.option (Dyn.pair Dyn.int Dyn.string));
+    (Map.find_first_opt m ~f:(fun k -> k >= 99)
+     |> Dyn.option (Dyn.pair Dyn.int Dyn.string));
   [%expect {| None |}];
-  print_binding (Map.find_last (fun k -> k <= 2) m);
+  print_binding (Map.find_last m ~f:(fun k -> k <= 2));
   [%expect {| (2, "two") |}];
   print_dyn
-    (Map.find_last_opt (fun k -> k <= 0) m |> Dyn.option (Dyn.pair Dyn.int Dyn.string));
+    (Map.find_last_opt m ~f:(fun k -> k <= 0) |> Dyn.option (Dyn.pair Dyn.int Dyn.string));
   [%expect {| None |}];
   ()
 ;;
@@ -120,15 +121,15 @@ let%expect_test "min_binding / max_binding / choose" =
 let%expect_test "iter / fold / for_all / exists" =
   let m = Map.of_list (module Int) [ 1, "one"; 2, "two" ] in
   let count = ref 0 in
-  Map.iter (fun _ _ -> incr count) m;
+  Map.iter m ~f:(fun ~key:_ ~data:_ -> incr count);
   print_dyn (!count |> Dyn.int);
   [%expect {| 2 |}];
-  let sum = Map.fold (fun k _ acc -> acc + k) m 0 in
+  let sum = Map.fold m 0 ~f:(fun ~key ~data:_ acc -> acc + key) in
   print_dyn (sum |> Dyn.int);
   [%expect {| 3 |}];
-  print_dyn (Map.for_all (fun k _ -> k > 0) m |> Dyn.bool);
+  print_dyn (Map.for_all m ~f:(fun k _ -> k > 0) |> Dyn.bool);
   [%expect {| true |}];
-  print_dyn (Map.exists (fun k _ -> k > 1) m |> Dyn.bool);
+  print_dyn (Map.exists m ~f:(fun k _ -> k > 1) |> Dyn.bool);
   [%expect {| true |}];
   ()
 ;;
@@ -136,24 +137,25 @@ let%expect_test "iter / fold / for_all / exists" =
 let%expect_test "map / mapi / filter / filter_map / partition" =
   let m = Map.of_list (module Int) [ 1, "one"; 2, "two"; 3, "three" ] in
   print_dyn
-    (Map.map String.length m |> Map.bindings |> Dyn.list (Dyn.pair Dyn.int Dyn.int));
+    (Map.map m ~f:String.length |> Map.bindings |> Dyn.list (Dyn.pair Dyn.int Dyn.int));
   [%expect {| [ (1, 3); (2, 3); (3, 5) ] |}];
   print_dyn
-    (Map.mapi (fun k v -> k, v) m
+    (Map.mapi m ~f:(fun k v -> k, v)
      |> Map.bindings
      |> Dyn.list (Dyn.pair Dyn.int (Dyn.pair Dyn.int Dyn.string)));
   [%expect {| [ (1, (1, "one")); (2, (2, "two")); (3, (3, "three")) ] |}];
   print_dyn
-    (Map.filter (fun k _ -> k <> 2) m
+    (Map.filter m ~f:(fun k _ -> k <> 2)
      |> Map.bindings
      |> Dyn.list (Dyn.pair Dyn.int Dyn.string));
   [%expect {| [ (1, "one"); (3, "three") ] |}];
   print_dyn
-    (Map.filter_map (fun k v -> if k = 2 then None else Some (String.uppercase_ascii v)) m
+    (Map.filter_map m ~f:(fun k v ->
+       if k = 2 then None else Some (String.uppercase_ascii v))
      |> Map.bindings
      |> Dyn.list (Dyn.pair Dyn.int Dyn.string));
   [%expect {| [ (1, "ONE"); (3, "THREE") ] |}];
-  let t, f = Map.partition (fun k _ -> k <= 1) m in
+  let t, f = Map.partition m ~f:(fun k _ -> k <= 1) in
   print_dyn (Map.bindings t |> Dyn.list (Dyn.pair Dyn.int Dyn.string));
   [%expect {| [ (1, "one") ] |}];
   print_dyn (Map.bindings f |> Dyn.list (Dyn.pair Dyn.int Dyn.string));
@@ -163,7 +165,7 @@ let%expect_test "map / mapi / filter / filter_map / partition" =
 
 let%expect_test "split" =
   let m = Map.of_list (module Int) [ 1, "one"; 2, "two"; 3, "three" ] in
-  let l, present, r = Map.split 2 m in
+  let l, present, r = Map.split m ~key:2 in
   print_dyn (Map.bindings l |> Dyn.list (Dyn.pair Dyn.int Dyn.string));
   [%expect {| [ (1, "one") ] |}];
   print_dyn (present |> Dyn.option Dyn.string);
@@ -177,26 +179,25 @@ let%expect_test "merge / union" =
   let m1 = Map.of_list (module Int) [ 1, "one"; 2, "two" ] in
   let m2 = Map.of_list (module Int) [ 2, "TWO"; 3, "three" ] in
   let merged =
-    Map.merge
-      (fun _ v1 v2 ->
-         match v1, v2 with
-         | Some v, None | None, Some v -> Some v
-         | Some v1, Some v2 -> Some (v1 ^ "/" ^ v2)
-         | None, None -> None [@coverage off])
-      m1
-      m2
+    Map.merge m1 m2 ~f:(fun _ v1 v2 ->
+      match v1, v2 with
+      | Some v, None | None, Some v -> Some v
+      | Some v1, Some v2 -> Some (v1 ^ "/" ^ v2)
+      | None, None -> None [@coverage off])
   in
   print_bindings merged;
   [%expect {| [ (1, "one"); (2, "two/TWO"); (3, "three") ] |}];
-  let union = Map.union (fun _ v1 _v2 -> Some v1) m1 m2 in
+  let union = Map.union m1 m2 ~f:(fun _ v1 _v2 -> Some v1) in
   print_bindings union;
   [%expect {| [ (1, "one"); (2, "two"); (3, "three") ] |}];
   (* Union with an empty map on either side returns the other map physically
      unchanged; the combining function below is never called in that case. *)
   let empty = Map.empty (module Int) in
-  require (phys_equal m1 (Map.union (fun _ v1 _ -> (Some v1 [@coverage off])) m1 empty));
+  require
+    (phys_equal m1 (Map.union m1 empty ~f:(fun _ v1 _ -> (Some v1 [@coverage off]))));
   [%expect {||}];
-  require (phys_equal m1 (Map.union (fun _ v1 _ -> (Some v1 [@coverage off])) empty m1));
+  require
+    (phys_equal m1 (Map.union empty m1 ~f:(fun _ v1 _ -> (Some v1 [@coverage off]))));
   [%expect {||}];
   ()
 ;;
@@ -205,11 +206,11 @@ let%expect_test "equal / compare" =
   let m1 = Map.of_list (module Int) [ 1, "one"; 2, "two" ] in
   let m2 = Map.of_list (module Int) [ 1, "one"; 2, "two" ] in
   let m3 = Map.of_list (module Int) [ 1, "one"; 2, "TWO" ] in
-  print_dyn (Map.equal String.equal m1 m2 |> Dyn.bool);
+  print_dyn (Map.equal m1 m2 ~f:String.equal |> Dyn.bool);
   [%expect {| true |}];
-  print_dyn (Map.equal String.equal m1 m3 |> Dyn.bool);
+  print_dyn (Map.equal m1 m3 ~f:String.equal |> Dyn.bool);
   [%expect {| false |}];
-  print_dyn (Map.compare String.compare m1 m2 |> Dyn.int);
+  print_dyn (Map.compare m1 m2 ~f:String.compare |> Dyn.int);
   [%expect {| 0 |}];
   ()
 ;;
@@ -220,9 +221,10 @@ let%expect_test "to_seq / to_rev_seq / to_seq_from / add_seq / of_seq" =
   [%expect {| [ (1, "one"); (2, "two"); (3, "three") ] |}];
   print_dyn (Map.to_rev_seq m |> List.of_seq |> Dyn.list (Dyn.pair Dyn.int Dyn.string));
   [%expect {| [ (3, "three"); (2, "two"); (1, "one") ] |}];
-  print_dyn (Map.to_seq_from 2 m |> List.of_seq |> Dyn.list (Dyn.pair Dyn.int Dyn.string));
+  print_dyn
+    (Map.to_seq_from m ~key:2 |> List.of_seq |> Dyn.list (Dyn.pair Dyn.int Dyn.string));
   [%expect {| [ (2, "two"); (3, "three") ] |}];
-  let m2 = Map.add_seq (List.to_seq [ 4, "four" ]) m in
+  let m2 = Map.add_seq m (List.to_seq [ 4, "four" ]) in
   print_bindings m2;
   [%expect {| [ (1, "one"); (2, "two"); (3, "three"); (4, "four") ] |}];
   let m3 = Map.of_seq (module Int) (List.to_seq [ 5, "five"; 6, "six" ]) in
@@ -241,7 +243,7 @@ let%expect_test "different compare functions" =
   let m1 = Map.of_list (module Int) [ 1, "one" ] in
   let m2 = Map.of_list (module Int_rev) [ 2, "two"; 1, "one" ] in
   require_does_raise (fun () ->
-    Map.merge (fun (_ : int) _ _ : _ option -> (assert false [@coverage off])) m1 m2);
+    Map.merge m1 m2 ~f:(fun (_ : int) _ _ : _ option -> (assert false [@coverage off])));
   [%expect {| Invalid_argument("Map.merge: maps have different compare functions.") |}];
   ()
 ;;

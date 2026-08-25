@@ -16,7 +16,9 @@
 
   - Remove the functor and signature. Make the type parametrized by the type of
     keys and data. Require [(module HashedType)] (resp. SeededType) as first-class
-    module argument everywhere needed. *)
+    module argument everywhere needed.
+
+  - Label closures [~f], and the key and data of a binding [~key] and [~data]. *)
 
 (**************************************************************************)
 (*                                                                        *)
@@ -75,54 +77,54 @@ val reset : ('a, 'b) t -> unit
 (** Return a copy of the given hashtable. *)
 val copy : ('a, 'b) t -> ('a, 'b) t
 
-(** [add tbl key data] adds a binding of [key] to [data]
+(** [add tbl ~key ~data] adds a binding of [key] to [data]
     in table [tbl].
 
     {b Warning}: Previous bindings for [key] are not removed, but simply
-    hidden. That is, after performing {!remove}[ tbl key],
+    hidden. That is, after performing {!remove}[ tbl ~key],
     the previous binding for [key], if any, is restored.
     (Same behavior as with association lists.)
 
     If you desire the classic behavior of replacing elements,
     see {!replace}. *)
-val add : ('a, 'b) t -> 'a -> 'b -> unit
+val add : ('a, 'b) t -> key:'a -> data:'b -> unit
 
-(** [find tbl x] returns the current binding of [x] in [tbl], or raises
+(** [find tbl ~key] returns the current binding of [key] in [tbl], or raises
     [Not_found] if no such binding exists. *)
-val find : ('a, 'b) t -> 'a -> 'b
+val find : ('a, 'b) t -> key:'a -> 'b
 
-(** [find_opt tbl x] returns the current binding of [x] in [tbl], or [None] if
-    no such binding exists. *)
-val find_opt : ('a, 'b) t -> 'a -> 'b option
+(** [find_opt tbl ~key] returns the current binding of [key] in [tbl], or [None]
+    if no such binding exists. *)
+val find_opt : ('a, 'b) t -> key:'a -> 'b option
 
-(** [find_all tbl x] returns the list of all data associated with [x] in [tbl].
-    The current binding is returned first, then the previous bindings, in
+(** [find_all tbl ~key] returns the list of all data associated with [key] in
+    [tbl]. The current binding is returned first, then the previous bindings, in
     reverse order of introduction in the table. *)
-val find_all : ('a, 'b) t -> 'a -> 'b list
+val find_all : ('a, 'b) t -> key:'a -> 'b list
 
-(** [mem tbl x] checks if [x] is bound in [tbl]. *)
-val mem : ('a, 'b) t -> 'a -> bool
+(** [mem tbl ~key] checks if [key] is bound in [tbl]. *)
+val mem : ('a, 'b) t -> key:'a -> bool
 
-(** [remove tbl x] removes the current binding of [x] in [tbl], restoring the
-    previous binding if it exists. It does nothing if [x] is not bound in
+(** [remove tbl ~key] removes the current binding of [key] in [tbl], restoring
+    the previous binding if it exists. It does nothing if [key] is not bound in
     [tbl]. *)
-val remove : ('a, 'b) t -> 'a -> unit
+val remove : ('a, 'b) t -> key:'a -> unit
 
 (** Same as {!remove} but returns the previous binding, if any. *)
-val find_and_remove : ('a, 'b) t -> 'a -> 'b option
+val find_and_remove : ('a, 'b) t -> key:'a -> 'b option
 
-(** [replace tbl key data] replaces the current binding of [key] in [tbl] by a
+(** [replace tbl ~key ~data] replaces the current binding of [key] in [tbl] by a
     binding of [key] to [data]. If [key] is unbound in [tbl], a binding of [key]
     to [data] is added to [tbl].
 
-    This is functionally equivalent to {!remove}[ tbl key] followed by
-    {!add}[ tbl key data]. *)
-val replace : ('a, 'b) t -> 'a -> 'b -> unit
+    This is functionally equivalent to {!remove}[ tbl ~key] followed by
+    {!add}[ tbl ~key ~data]. *)
+val replace : ('a, 'b) t -> key:'a -> data:'b -> unit
 
 (** Same as {!replace} but returns the previous binding, if any. *)
-val find_and_replace : ('a, 'b) t -> 'a -> 'b -> 'b option
+val find_and_replace : ('a, 'b) t -> key:'a -> data:'b -> 'b option
 
-(** [iter f tbl] applies [f] to all bindings in table [tbl]. [f] receives the
+(** [iter tbl ~f] applies [f] to all bindings in table [tbl]. [f] receives the
     key as first argument, and the associated value as second argument. Each
     binding is presented exactly once to [f].
 
@@ -138,17 +140,17 @@ val find_and_replace : ('a, 'b) t -> 'a -> 'b -> 'b option
 
     The behavior is not specified if the hash table is modified by [f] during
     the iteration. *)
-val iter : ('a -> 'b -> unit) -> ('a, 'b) t -> unit
+val iter : ('a, 'b) t -> f:('a -> 'b -> unit) -> unit
 
-(** [filter_map_inplace f tbl] applies [f] to all bindings in table [tbl] and
+(** [filter_map_inplace tbl ~f] applies [f] to all bindings in table [tbl] and
     update each binding depending on the result of [f]. If [f] returns [None],
     the binding is discarded. If it returns [Some new_val], the binding is
     update to associate the key to [new_val].
 
     Other comments for {!iter} apply as well. *)
-val filter_map_inplace : ('a -> 'b -> 'b option) -> ('a, 'b) t -> unit
+val filter_map_inplace : ('a, 'b) t -> f:('a -> 'b -> 'b option) -> unit
 
-(** [fold f tbl init] computes [(f kN dN ... (f k1 d1 init)...)], where
+(** [fold tbl init ~f] computes [(f kN dN ... (f k1 d1 init)...)], where
     [k1 ... kN] are the keys of all bindings in [tbl], and [d1 ... dN] are the
     associated values. Each binding is presented exactly once to [f].
 
@@ -164,7 +166,7 @@ val filter_map_inplace : ('a -> 'b -> 'b option) -> ('a, 'b) t -> unit
 
     The behavior is not specified if the hash table is modified by [f] during
     the iteration. *)
-val fold : ('a -> 'b -> 'acc -> 'acc) -> ('a, 'b) t -> 'acc -> 'acc
+val fold : ('a, 'b) t -> 'acc -> f:('a -> 'b -> 'acc -> 'acc) -> 'acc
 
 (** [length tbl] returns the number of bindings in [tbl]. It takes constant
     time. Multiple bindings are counted once each, so [length] gives the number

@@ -16,6 +16,8 @@
     "elements". Also, the interface is defunctorized, so it is in essence closer
     to the [Hashtbl0] interface from this project than OCaml when both of these
     diverge.
+
+  - Take the set as the first argument. Label closures [~f].
 *)
 
 (**************************************************************************)
@@ -60,7 +62,7 @@ val mem : 'a t -> 'a -> bool
     if [x] is not present in [set]. *)
 val remove : 'a t -> 'a -> unit
 
-(** [iter f set] applies [f] to all elements in set [set]. Each element is
+(** [iter set ~f] applies [f] to all elements in set [set]. Each element is
     presented exactly once to [f].
 
     The order in which the elements are passed to [f] is unspecified.
@@ -72,17 +74,17 @@ val remove : 'a t -> 'a -> unit
 
     The behavior is not specified if the hash set is modified by [f] during
     the iteration. *)
-val iter : ('a -> unit) -> 'a t -> unit
+val iter : 'a t -> f:('a -> unit) -> unit
 
-(** [filter_inplace f set] applies [f] to all elements in set [set] and decide
+(** [filter_inplace set ~f] applies [f] to all elements in set [set] and decide
     whether to keep the elements depending on the result of [f]. If [f] returns
     [false], the element is discarded. If it returns [true], the elements is
     kept.
 
     Other comments for {!iter} apply as well. *)
-val filter_inplace : ('a -> bool) -> 'a t -> unit
+val filter_inplace : 'a t -> f:('a -> bool) -> unit
 
-(** [fold f set init] computes [(f eN ... (f e1 init)...)], where [e1 ... eN]
+(** [fold set init ~f] computes [(f eN ... (f e1 init)...)], where [e1 ... eN]
     are the elements in [set]. Each element is presented exactly once to [f].
 
     The order in which the elements are passed to [f] is unspecified.
@@ -94,7 +96,7 @@ val filter_inplace : ('a -> bool) -> 'a t -> unit
 
     The behavior is not specified if the hash set is modified by [f] during
     the iteration. *)
-val fold : ('a -> 'acc -> 'acc) -> 'a t -> 'acc -> 'acc
+val fold : 'a t -> 'acc -> f:('a -> 'acc -> 'acc) -> 'acc
 
 (** [length set] returns the number of bindings in [set]. It takes constant
     time. *)
