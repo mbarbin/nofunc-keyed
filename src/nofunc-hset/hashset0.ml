@@ -21,7 +21,7 @@ let filter_inplace t ~f =
   Hashtbl.filter_map_inplace t ~f:(fun ~key ~data:() -> if f key then some_unit else None)
 ;;
 
-let fold t ~init ~f = Hashtbl.fold t ~init ~f:(fun ~key ~data:() acc -> f ~key acc)
+let fold t ~init ~f = Hashtbl.fold t ~init ~f:(fun ~key:elt ~data:() acc -> f ~elt acc)
 let length = Hashtbl.length
 let stats = Hashtbl.stats
 let to_seq = Hashtbl.to_seq_keys
