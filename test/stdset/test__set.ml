@@ -53,6 +53,20 @@ let%expect_test "remove" =
   let s2 = Set.remove 99 s in
   require (phys_equal s s2);
   [%expect {||}];
+  (* [3; 2; 1] builds a set whose root (3) has a non-trivial left subtree
+     {1, 2} and no right subtree: removing the root exercises merge's
+     t, Empty branch, and removing a key below the root exercises remove's
+     Lt branch in both directions. *)
+  let s3 = Set.of_list (module Int) [ 3; 2; 1 ] in
+  let s4 = Set.remove 3 s3 in
+  print_set s4;
+  [%expect {| [ 1; 2 ] |}];
+  let s5 = Set.remove 0 s3 in
+  require (phys_equal s3 s5);
+  [%expect {||}];
+  let s6 = Set.remove 1 s3 in
+  print_set s6;
+  [%expect {| [ 2; 3 ] |}];
   ()
 ;;
 
@@ -139,6 +153,18 @@ let%expect_test "disjoint" =
   [%expect {| true |}];
   print_dyn (Set.disjoint s1 s3 |> Dyn.bool);
   [%expect {| false |}];
+  (* A non-empty set is never disjoint from itself - exercises disjoint's
+     physical-equality fast path. *)
+  print_dyn (Set.disjoint s1 s1 |> Dyn.bool);
+  [%expect {| false |}];
+  (* s1's sole element (7) is found by descending into t2's right subtree
+     (root 4, then right child 6, then its right leaf 7) - exercising
+     split_bis's Found case reached via a Gt step, not just Lt or Eq at the
+     top. *)
+  let s4 = Set.singleton (module Int) 7 in
+  let t2 = Set.of_list (module Int) [ 1; 2; 3; 4; 5; 6; 7 ] in
+  print_dyn (Set.disjoint s4 t2 |> Dyn.bool);
+  [%expect {| false |}];
   ()
 ;;
 
@@ -153,6 +179,12 @@ let%expect_test "equal / compare" =
   print_dyn (Set.compare s1 s2 |> Dyn.int);
   [%expect {| 0 |}];
   require (Set.compare s1 s3 <> 0);
+  [%expect {||}];
+  (* Both orderings exercise compare's element comparator in both
+     directions. *)
+  require (Set.compare s1 s3 < 0);
+  [%expect {||}];
+  require (Set.compare s3 s1 > 0);
   [%expect {||}];
   ()
 ;;
@@ -179,6 +211,12 @@ let%expect_test "for_all / exists" =
   [%expect {| true |}];
   print_dyn (Set.exists (fun x -> x > 10) s |> Dyn.bool);
   [%expect {| false |}];
+  (* On a set with a non-trivial left subtree (root 4, left {1,2,3}),
+     matching only the leftmost element exercises exists's recursion into
+     the left subtree returning true, not just the right. *)
+  let s2 = Set.of_list (module Int) [ 1; 2; 3; 4; 5; 6; 7 ] in
+  print_dyn (Set.exists (fun x -> x = 1) s2 |> Dyn.bool);
+  [%expect {| true |}];
   ()
 ;;
 
@@ -826,6 +864,20 @@ let%expect_test "map - reordering triggers try_join's union path" =
   let s2 = Set.map (fun x -> 11 - x) s in
   print_set s2;
   [%expect {| [ 1; 6; 10 ] |}];
+  ()
+;;
+
+let%expect_test "map - reordering breaks the property on a non-empty left subtree" =
+  (* Root 4 has a non-trivial left subtree {1, 2, 3}. Reversing the whole
+     range maps the root to 96 and its left subtree to {97, 98, 99}, whose
+     max (99) is no longer less than 96 - unlike the tests above, where the
+     broken side is always a leaf's trivially-empty left child, this
+     exercises try_join's ordering check failing on a genuinely non-empty
+     left subtree. *)
+  let s = Set.of_list (module Int) [ 1; 2; 3; 4; 5; 6; 7 ] in
+  let s2 = Set.map (fun x -> 100 - x) s in
+  print_set s2;
+  [%expect {| [ 93; 94; 95; 96; 97; 98; 99 ] |}];
   ()
 ;;
 
