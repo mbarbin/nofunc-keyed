@@ -15,6 +15,10 @@
 - In `Set`, `Map`, `Hashtbl` and `Hashset` (the non-`std` packages), `fold`'s accumulator is now labeled `~init` instead of positional - it was an oversight that it wasn't, unlike every other optional-looking argument in this API (@mbarbin).
 - Moved `test/` from `nofunc-keyed-dev` to a new dedicated `nofunc-keyed-tests` package (@mbarbin).
 
+### Fixed
+
+- `Set.compare` and `Map.compare` (the non-`std` packages) now return `Ordering.t` instead of `int`, and `Map.compare`'s `f` (comparing associated data) now takes an `Ordering.t`-returning function too. These were an oversight - every other comparator in the non-`std` API already used `Ordering.t`, but these two whole-container "total ordering" functions were left returning plain `int`, inherited unconverted from the OCaml stdlib (@mbarbin).
+
 ### Deprecated
 
 - `Hashtbl.replace` and `Hashtbl.replace_seq` (the non-`std` package) are deprecated in favor of `Hashtbl.set` and `Hashtbl.set_seq`. Run `ocamlmig migrate` to update call sites (@mbarbin).

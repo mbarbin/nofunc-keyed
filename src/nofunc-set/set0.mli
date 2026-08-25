@@ -248,7 +248,7 @@ val equal : 'elt t -> 'elt t -> bool
 (** Total ordering between sets. Can be used as the ordering function for doing
     sets of sets. Raise [Invalid_argument] if the sets have different compare
     functions. *)
-val compare : 'elt t -> 'elt t -> int
+val compare : 'elt t -> 'elt t -> Ordering.t
 
 (** [subset s1 s2] tests whether the set [s1] is a subset of the set [s2]. Raise
     [Invalid_argument] if the sets have different compare functions. *)

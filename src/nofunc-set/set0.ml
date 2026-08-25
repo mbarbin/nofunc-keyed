@@ -101,7 +101,7 @@ let equal t1 t2 =
 
 let compare t1 t2 =
   check_same_compare t1 t2 ~fct:"compare";
-  Tree.compare ~compare:t1.compare t1.tree t2.tree
+  Ordering.of_int (Tree.compare ~compare:t1.compare t1.tree t2.tree)
 ;;
 
 let subset t1 t2 =

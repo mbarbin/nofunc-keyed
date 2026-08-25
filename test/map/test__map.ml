@@ -215,8 +215,11 @@ let%expect_test "equal / compare" =
   print_dyn (Map.equal m1 m3 ~f:(fun ~left ~right -> String.equal left right) |> Dyn.bool);
   [%expect {| false |}];
   print_dyn
-    (Map.compare m1 m2 ~f:(fun ~left ~right -> String.compare left right) |> Dyn.int);
-  [%expect {| 0 |}];
+    (Map.compare m1 m2 ~f:(fun ~left ~right ->
+       Ordering.of_int (String.compare left right))
+     |> Ordering.to_string
+     |> Dyn.string);
+  [%expect {| "=" |}];
   ()
 ;;
 

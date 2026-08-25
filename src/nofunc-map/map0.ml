@@ -118,7 +118,12 @@ let equal t1 t2 ~f =
 
 let compare t1 t2 ~f =
   check_same_compare t1 t2 ~fct:"compare";
-  Tree.compare ~compare:t1.compare (fun left right -> f ~left ~right) t1.tree t2.tree
+  Ordering.of_int
+    (Tree.compare
+       ~compare:t1.compare
+       (fun left right -> Ordering.to_int (f ~left ~right))
+       t1.tree
+       t2.tree)
 ;;
 
 let for_all t ~f = Tree.for_all (fun key data -> f ~key ~data) t.tree

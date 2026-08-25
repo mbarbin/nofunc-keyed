@@ -304,7 +304,11 @@ val equal : ('key, 'a) t -> ('key, 'a) t -> f:(left:'a -> right:'a -> bool) -> b
     to avoid mixing up which map each value comes from, especially since both
     have the same type. Raise [Invalid_argument] if the maps have different
     compare functions. *)
-val compare : ('key, 'a) t -> ('key, 'a) t -> f:(left:'a -> right:'a -> int) -> int
+val compare
+  :  ('key, 'a) t
+  -> ('key, 'a) t
+  -> f:(left:'a -> right:'a -> Ordering.t)
+  -> Ordering.t
 
 (** [for_all m ~f] checks if all the bindings of the map satisfy the predicate
     [f]. [key] and [data] are labeled to avoid mixing them up. *)

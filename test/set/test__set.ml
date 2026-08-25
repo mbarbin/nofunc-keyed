@@ -176,8 +176,8 @@ let%expect_test "equal / compare / subset" =
   [%expect {| true |}];
   print_dyn (Set.equal s1 s3 |> Dyn.bool);
   [%expect {| false |}];
-  print_dyn (Set.compare s1 s2 |> Dyn.int);
-  [%expect {| 0 |}];
+  print_dyn (Set.compare s1 s2 |> Ordering.to_string |> Dyn.string);
+  [%expect {| "=" |}];
   print_dyn (Set.subset s1 s3 |> Dyn.bool);
   [%expect {| true |}];
   ()
