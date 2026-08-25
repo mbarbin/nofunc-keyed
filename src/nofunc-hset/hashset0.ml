@@ -23,6 +23,7 @@ let filter_inplace t ~f =
 
 let fold t ~init ~f = Hashtbl.fold t ~init ~f:(fun ~key:elt ~data:() acc -> f ~elt acc)
 let length = Hashtbl.length
+let is_empty = Hashtbl.is_empty
 let stats = Hashtbl.stats
 let to_seq = Hashtbl.to_seq_keys
 let add_seq t seq = Seq.iter (fun key -> add t key) seq

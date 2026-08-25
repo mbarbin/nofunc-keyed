@@ -191,6 +191,9 @@ val fold : ('a, 'b) t -> init:'acc -> f:(key:'a -> data:'b -> 'acc -> 'acc) -> '
     of times [iter] calls its first argument. *)
 val length : ('a, 'b) t -> int
 
+(** [is_empty tbl] is [length tbl = 0]. *)
+val is_empty : ('a, 'b) t -> bool
+
 (** [stats tbl] returns statistics about the table [tbl]: number of buckets,
     size of the biggest bucket, distribution of buckets by size. *)
 val stats : ('a, 'b) t -> Stdlib.Hashtbl.statistics

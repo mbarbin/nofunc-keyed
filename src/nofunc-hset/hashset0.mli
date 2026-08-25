@@ -108,6 +108,9 @@ val fold : 'a t -> init:'acc -> f:(elt:'a -> 'acc -> 'acc) -> 'acc
     time. *)
 val length : _ t -> int
 
+(** [is_empty set] is [length set = 0]. *)
+val is_empty : _ t -> bool
+
 (** [stats tbl] returns statistics about the table [tbl]: number of buckets,
     size of the biggest bucket, distribution of buckets by size. *)
 val stats : _ t -> Stdlib.Hashtbl.statistics

@@ -5,6 +5,7 @@
 - Added `Hashtbl.set` and `Hashtbl.set_seq` (the non-`std` package), aliases for `replace` and `replace_seq`, which are now deprecated with `ocamlmig` migration annotations (@mbarbin).
 - Added `Hashtbl.shadow` and `Hashtbl.shadow_seq` (the non-`std` package), renamed from `add` and `add_seq`, which are now deprecated with `ocamlmig` migration annotations. The rename makes this rarer operation (it shadows rather than replaces an existing binding) less likely to be reached for by mistake - most callers meaning to bind a key regardless of its previous value should use `set` instead (@mbarbin).
 - Added `Hashtbl.remove_all` (the non-`std` package): unlike `remove`, which only pops the most recently shadowed binding of a key, `remove_all` clears every binding of that key at once (@mbarbin).
+- Added `is_empty` to `Hashtbl` and `Hashset` (the non-`std` packages), matching the `is_empty` already present in `Set` and `Map` (@mbarbin).
 
 ### Changed
 

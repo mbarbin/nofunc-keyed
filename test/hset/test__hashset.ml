@@ -16,14 +16,18 @@ let sorted_elements set =
 
 let print_elements set = print_dyn (sorted_elements set |> Dyn.list Dyn.int)
 
-let%expect_test "create / add / mem / remove / length" =
+let%expect_test "create / add / mem / remove / length / is_empty" =
   let set = Hashset.create (module Int) 16 in
+  print_dyn (Hashset.is_empty set |> Dyn.bool);
+  [%expect {| true |}];
   Hashset.add set 1;
   Hashset.add set 2;
   (* [add] is idempotent. *)
   Hashset.add set 2;
   print_dyn (Hashset.length set |> Dyn.int);
   [%expect {| 2 |}];
+  print_dyn (Hashset.is_empty set |> Dyn.bool);
+  [%expect {| false |}];
   print_dyn (Hashset.mem set 2 |> Dyn.bool);
   [%expect {| true |}];
   Hashset.remove set 2;

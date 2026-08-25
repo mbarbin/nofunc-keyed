@@ -43,6 +43,7 @@ let iter t ~f = Tbl.iter (fun key data -> f ~key ~data) t.tbl
 let filter_map_inplace t ~f = Tbl.filter_map_inplace (fun key data -> f ~key ~data) t.tbl
 let fold t ~init ~f = Tbl.fold (fun key data acc -> f ~key ~data acc) t.tbl init
 let length t = Tbl.length t.tbl
+let is_empty t = length t = 0
 let stats t = Tbl.stats t.tbl
 let to_seq t = Tbl.to_seq t.tbl
 let to_seq_keys t = Tbl.to_seq_keys t.tbl
