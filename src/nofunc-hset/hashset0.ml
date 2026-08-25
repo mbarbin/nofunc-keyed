@@ -42,6 +42,12 @@ let of_seq mkey seq =
   t
 ;;
 
+let of_list mkey l =
+  let t = create mkey (List.length l) in
+  List.iter (fun key -> add t key) l;
+  t
+;;
+
 module M (T : sig
     type t
   end) =

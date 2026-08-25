@@ -148,6 +148,11 @@ val create : (module Hashtbl.HashedType with type t = 'a) -> int -> 'a t
 (** Same as {!of_seq_seeded} but never randomized. *)
 val of_seq : (module Hashtbl.HashedType with type t = 'a) -> 'a Seq.t -> 'a t
 
+(** Build a set from the given elements. The elements are added in the same
+    order they appear in the list, using {!add}, which means that duplicated
+    elements are simply ignored (add is idempotent). *)
+val of_list : (module Hashtbl.HashedType with type t = 'a) -> 'a list -> 'a t
+
 (** {1:modular Modular explicit usage}
 
     The declarations below offer an alternative, module-based style for fixing

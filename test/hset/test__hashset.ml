@@ -73,7 +73,7 @@ let%expect_test "clear / reset / copy" =
   ()
 ;;
 
-let%expect_test "stats / to_seq / add_seq / of_seq" =
+let%expect_test "stats / to_seq / add_seq / of_seq / of_list" =
   let set = Hashset.create (module Int) 16 in
   Hashset.add_seq set (List.to_seq [ 1; 2; 2; 3 ]);
   let stats = Hashset.stats set in
@@ -84,6 +84,9 @@ let%expect_test "stats / to_seq / add_seq / of_seq" =
   let set2 = Hashset.of_seq (module Int) (List.to_seq [ 4; 5 ]) in
   print_elements set2;
   [%expect {| [ 4; 5 ] |}];
+  let set3 = Hashset.of_list (module Int) [ 6; 7; 7 ] in
+  print_elements set3;
+  [%expect {| [ 6; 7 ] |}];
   ()
 ;;
 
