@@ -324,8 +324,7 @@ let remove ~equal ~seeded_hash h key =
   let i = key_index ~seeded_hash h key in
   ignore (remove_bucket ~equal h i key Empty h.data.(i) : _ bucketlist)
 
-let rec remove_all_bucket ~equal h i key prec bucket =
-  match bucket with
+let rec remove_all_bucket ~equal h i key prec = function
   | Empty -> ()
   | Cons { key = k; next; _ } as cell ->
       if equal k key then begin
