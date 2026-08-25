@@ -11,9 +11,9 @@ type !'a t = ('a, unit) Hashtbl.t
 let clear = Hashtbl.clear
 let reset = Hashtbl.reset
 let copy = Hashtbl.copy
-let add t key = Hashtbl.replace t ~key ~data:()
-let mem t key = Hashtbl.mem t key
-let remove t key = Hashtbl.remove t key
+let add t key = Hashtbl.set t ~key ~data:()
+let mem = Hashtbl.mem
+let remove = Hashtbl.remove
 let iter t ~f = Hashtbl.iter t ~f:(fun ~key ~data:() -> f key)
 let some_unit = Some ()
 

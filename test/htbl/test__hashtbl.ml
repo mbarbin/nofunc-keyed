@@ -37,10 +37,10 @@ let%expect_test "create / length / add / find / find_exn / find_all / mem" =
   ()
 ;;
 
-let%expect_test "replace / find_and_replace / find_and_remove / remove" =
+let%expect_test "set / find_and_replace / find_and_remove / remove" =
   let tbl = Hashtbl.create (module Int) 16 in
-  Hashtbl.replace tbl ~key:1 ~data:"one";
-  Hashtbl.replace tbl ~key:2 ~data:"two";
+  Hashtbl.set tbl ~key:1 ~data:"one";
+  Hashtbl.set tbl ~key:2 ~data:"two";
   print_dyn (Hashtbl.find_and_replace tbl ~key:1 ~data:"ONE" |> Dyn.option Dyn.string);
   [%expect {| Some "one" |}];
   print_dyn (Hashtbl.find_and_remove tbl 2 |> Dyn.option Dyn.string);
@@ -53,8 +53,8 @@ let%expect_test "replace / find_and_replace / find_and_remove / remove" =
 
 let%expect_test "iter / fold / filter_map_inplace" =
   let tbl = Hashtbl.create (module Int) 16 in
-  Hashtbl.replace tbl ~key:1 ~data:"one";
-  Hashtbl.replace tbl ~key:2 ~data:"two";
+  Hashtbl.set tbl ~key:1 ~data:"one";
+  Hashtbl.set tbl ~key:2 ~data:"two";
   let count = ref 0 in
   Hashtbl.iter tbl ~f:(fun ~key:_ ~data:_ -> incr count);
   print_dyn (!count |> Dyn.int);
@@ -71,9 +71,9 @@ let%expect_test "iter / fold / filter_map_inplace" =
 
 let%expect_test "clear / reset / copy" =
   let tbl = Hashtbl.create (module Int) 16 in
-  Hashtbl.replace tbl ~key:1 ~data:"one";
+  Hashtbl.set tbl ~key:1 ~data:"one";
   let tbl2 = Hashtbl.copy tbl in
-  Hashtbl.replace tbl2 ~key:2 ~data:"two";
+  Hashtbl.set tbl2 ~key:2 ~data:"two";
   print_dyn (Hashtbl.length tbl |> Dyn.int);
   [%expect {| 1 |}];
   print_dyn (Hashtbl.length tbl2 |> Dyn.int);
@@ -89,8 +89,8 @@ let%expect_test "clear / reset / copy" =
 
 let%expect_test "stats / to_seq / to_seq_keys / to_seq_values" =
   let tbl = Hashtbl.create (module Int) 16 in
-  Hashtbl.replace tbl ~key:1 ~data:"one";
-  Hashtbl.replace tbl ~key:2 ~data:"two";
+  Hashtbl.set tbl ~key:1 ~data:"one";
+  Hashtbl.set tbl ~key:2 ~data:"two";
   let stats = Hashtbl.stats tbl in
   require (stats.num_buckets > 0);
   [%expect {||}];
@@ -108,12 +108,12 @@ let%expect_test "stats / to_seq / to_seq_keys / to_seq_values" =
   ()
 ;;
 
-let%expect_test "add_seq / replace_seq / of_seq" =
+let%expect_test "add_seq / set_seq / of_seq" =
   let tbl = Hashtbl.create (module Int) 16 in
   Hashtbl.add_seq tbl (List.to_seq [ 1, "one"; 2, "two" ]);
   print_bindings tbl;
   [%expect {| [ (1, "one"); (2, "two") ] |}];
-  Hashtbl.replace_seq tbl (List.to_seq [ 1, "ONE" ]);
+  Hashtbl.set_seq tbl (List.to_seq [ 1, "ONE" ]);
   print_bindings tbl;
   [%expect {| [ (1, "ONE"); (2, "two") ] |}];
   let tbl2 = Hashtbl.of_seq (module Int) (List.to_seq [ 3, "three"; 4, "four" ]) in
@@ -124,7 +124,7 @@ let%expect_test "add_seq / replace_seq / of_seq" =
 
 let%expect_test "create_seeded / of_seq_seeded" =
   let tbl = Hashtbl.create_seeded (module Int) 16 in
-  Hashtbl.replace tbl ~key:1 ~data:"one";
+  Hashtbl.set tbl ~key:1 ~data:"one";
   print_bindings tbl;
   [%expect {| [ (1, "one") ] |}];
   let tbl2 = Hashtbl.of_seq_seeded (module Int) (List.to_seq [ 2, "two"; 3, "three" ]) in
@@ -144,9 +144,9 @@ let%expect_test "M / sexp_of_m__t / dyn_of_m__t" =
   (* [Hashtbl.M(Key).t] fixes the key type, leaving only the data type as a
      parameter, as illustrated by this type annotation. *)
   let tbl : string Hashtbl.M(Key).t = Hashtbl.create (module Key) 16 in
-  Hashtbl.replace tbl ~key:3 ~data:"three";
-  Hashtbl.replace tbl ~key:1 ~data:"one";
-  Hashtbl.replace tbl ~key:2 ~data:"two";
+  Hashtbl.set tbl ~key:3 ~data:"three";
+  Hashtbl.set tbl ~key:1 ~data:"one";
+  Hashtbl.set tbl ~key:2 ~data:"two";
   (* Iteration order of a hash table is unspecified; [sexp_of_m__t] and
      [dyn_of_m__t] sort the bindings by [Key.compare] so that the output below
      is deterministic. *)

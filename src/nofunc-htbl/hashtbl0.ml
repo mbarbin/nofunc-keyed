@@ -29,7 +29,7 @@ let find_and_remove t key =
   Tbl.find_and_remove ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
 ;;
 
-let replace t ~key ~data =
+let set t ~key ~data =
   Tbl.replace ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key data
 ;;
 
@@ -47,9 +47,7 @@ let to_seq_keys t = Tbl.to_seq_keys t.tbl
 let to_seq_values t = Tbl.to_seq_values t.tbl
 let add_seq t seq = Tbl.add_seq ~seeded_hash:t.seeded_hash t.tbl seq
 
-let replace_seq t seq =
-  Tbl.replace_seq ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl seq
-;;
+let set_seq t seq = Tbl.replace_seq ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl seq
 
 let create (type key) (module Key : HashedType with type t = key) len =
   let seeded_hash _ t = Key.hash t in
@@ -111,3 +109,6 @@ let dyn_of_m__t (type key) (module T : Dynable with type t = key) data_to_dyn t 
      |> List.sort (fun (key1, _) (key2, _) -> Ordering.to_int (T.compare key1 key2))
      |> List.map (fun (key, data) -> T.to_dyn key, data_to_dyn data))
 ;;
+
+let replace = set
+let replace_seq = set_seq

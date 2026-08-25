@@ -1,11 +1,19 @@
 ## Unreleased
 
+### Added
+
+- Added `Hashtbl.set` and `Hashtbl.set_seq` (the non-`std` package), aliases for `replace` and `replace_seq`, which are now deprecated with `ocamlmig` migration annotations (@mbarbin).
+
 ### Changed
 
 - In `Map` and `Hashtbl` (the non-`std` packages), swapped the names `find` and `find_opt`: `find` now returns an `option` and `find_opt` is gone; the raising version is now `find_exn` (@mbarbin).
 - In `Set` and `Hashset` (the non-`std` packages), `fold`'s callback now labels the element `~elt` instead of `~key` - these are element containers, not key/value ones, so `key` didn't fit (@mbarbin).
 - In `Set`, `Map`, `Hashtbl` and `Hashset` (the non-`std` packages), `fold`'s accumulator is now labeled `~init` instead of positional - it was an oversight that it wasn't, unlike every other optional-looking argument in this API (@mbarbin).
 - Moved `test/` from `nofunc-keyed-dev` to a new dedicated `nofunc-keyed-tests` package (@mbarbin).
+
+### Deprecated
+
+- `Hashtbl.replace` and `Hashtbl.replace_seq` (the non-`std` package) are deprecated in favor of `Hashtbl.set` and `Hashtbl.set_seq`. Run `ocamlmig migrate` to update call sites (@mbarbin).
 
 ## 0.1.0 (2026-02-19)
 
