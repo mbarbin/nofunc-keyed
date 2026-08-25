@@ -20,10 +20,10 @@ let print_bindings tbl =
   print_dyn (sorted_bindings tbl |> Dyn.list (Dyn.pair Dyn.int Dyn.string))
 ;;
 
-let%expect_test "create / length / add / find / find_exn / find_all / mem" =
+let%expect_test "create / length / shadow / find / find_exn / find_all / mem" =
   let tbl = Hashtbl.create (module Int) 16 in
-  Hashtbl.add tbl ~key:1 ~data:"one";
-  Hashtbl.add tbl ~key:1 ~data:"ONE";
+  Hashtbl.shadow tbl ~key:1 ~data:"one";
+  Hashtbl.shadow tbl ~key:1 ~data:"ONE";
   print_dyn (Hashtbl.length tbl |> Dyn.int);
   [%expect {| 2 |}];
   print_dyn (Hashtbl.find_exn tbl 1 |> Dyn.string);
@@ -34,6 +34,38 @@ let%expect_test "create / length / add / find / find_exn / find_all / mem" =
   [%expect {| [ "ONE"; "one" ] |}];
   print_dyn (Hashtbl.mem tbl 1 |> Dyn.bool);
   [%expect {| true |}];
+  ()
+;;
+
+let%expect_test "shadow: multiple bindings for the same key, retrieved with find_all" =
+  let tbl = Hashtbl.create (module Int) 16 in
+  Hashtbl.shadow tbl ~key:1 ~data:"first";
+  Hashtbl.shadow tbl ~key:1 ~data:"second";
+  Hashtbl.shadow tbl ~key:1 ~data:"third";
+  (* Every [shadow] adds a new binding on top of the previous one rather
+     than replacing it - [length] counts each of them separately. *)
+  print_dyn (Hashtbl.length tbl |> Dyn.int);
+  [%expect {| 3 |}];
+  (* [find_all] returns every binding for [key], most recently shadowed
+     first. *)
+  print_dyn (Hashtbl.find_all tbl 1 |> Dyn.list Dyn.string);
+  [%expect {| [ "third"; "second"; "first" ] |}];
+  (* [find] (and [find_exn]) only ever see the most recent one. *)
+  print_dyn (Hashtbl.find tbl 1 |> Dyn.option Dyn.string);
+  [%expect {| Some "third" |}];
+  (* [remove] pops the most recent binding, uncovering the one it was
+     shadowing - it does not clear every binding for [key] at once. *)
+  Hashtbl.remove tbl 1;
+  print_dyn (Hashtbl.find_all tbl 1 |> Dyn.list Dyn.string);
+  [%expect {| [ "second"; "first" ] |}];
+  Hashtbl.remove tbl 1;
+  print_dyn (Hashtbl.find_all tbl 1 |> Dyn.list Dyn.string);
+  [%expect {| [ "first" ] |}];
+  Hashtbl.remove tbl 1;
+  print_dyn (Hashtbl.find_all tbl 1 |> Dyn.list Dyn.string);
+  [%expect {| [] |}];
+  print_dyn (Hashtbl.mem tbl 1 |> Dyn.bool);
+  [%expect {| false |}];
   ()
 ;;
 
@@ -108,9 +140,9 @@ let%expect_test "stats / to_seq / to_seq_keys / to_seq_values" =
   ()
 ;;
 
-let%expect_test "add_seq / set_seq / of_seq" =
+let%expect_test "shadow_seq / set_seq / of_seq" =
   let tbl = Hashtbl.create (module Int) 16 in
-  Hashtbl.add_seq tbl (List.to_seq [ 1, "one"; 2, "two" ]);
+  Hashtbl.shadow_seq tbl (List.to_seq [ 1, "one"; 2, "two" ]);
   print_bindings tbl;
   [%expect {| [ (1, "one"); (2, "two") ] |}];
   Hashtbl.set_seq tbl (List.to_seq [ 1, "ONE" ]);

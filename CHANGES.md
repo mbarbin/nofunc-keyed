@@ -3,6 +3,7 @@
 ### Added
 
 - Added `Hashtbl.set` and `Hashtbl.set_seq` (the non-`std` package), aliases for `replace` and `replace_seq`, which are now deprecated with `ocamlmig` migration annotations (@mbarbin).
+- Added `Hashtbl.shadow` and `Hashtbl.shadow_seq` (the non-`std` package), renamed from `add` and `add_seq`, which are now deprecated with `ocamlmig` migration annotations. The rename makes this rarer operation (it shadows rather than replaces an existing binding) less likely to be reached for by mistake - most callers meaning to bind a key regardless of its previous value should use `set` instead (@mbarbin).
 
 ### Changed
 
@@ -14,6 +15,7 @@
 ### Deprecated
 
 - `Hashtbl.replace` and `Hashtbl.replace_seq` (the non-`std` package) are deprecated in favor of `Hashtbl.set` and `Hashtbl.set_seq`. Run `ocamlmig migrate` to update call sites (@mbarbin).
+- `Hashtbl.add` and `Hashtbl.add_seq` (the non-`std` package) are deprecated in favor of `Hashtbl.shadow` and `Hashtbl.shadow_seq`. Run `ocamlmig migrate` to update call sites (@mbarbin).
 
 ## 0.1.0 (2026-02-19)
 

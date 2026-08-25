@@ -82,17 +82,19 @@ val reset : ('a, 'b) t -> unit
 (** Return a copy of the given hashtable. *)
 val copy : ('a, 'b) t -> ('a, 'b) t
 
-(** [add tbl ~key ~data] adds a binding of [key] to [data]
-    in table [tbl].
+(** [shadow tbl ~key ~data] adds a binding of [key] to [data] in table
+    [tbl], on top of any binding [key] may already have, rather than
+    replacing it.
 
     {b Warning}: Previous bindings for [key] are not removed, but simply
     hidden. That is, after performing {!remove}[ tbl key],
     the previous binding for [key], if any, is restored.
     (Same behavior as with association lists.)
 
-    If you desire the classic behavior of replacing elements,
-    see {!set}. *)
-val add : ('a, 'b) t -> key:'a -> data:'b -> unit
+    This is a rare thing to want: most callers who mean to bind [key] to
+    [data], regardless of what [key] was bound to before, should reach for
+    {!set} instead. *)
+val shadow : ('a, 'b) t -> key:'a -> data:'b -> unit
 
 (** [find tbl key] returns the current binding of [key] in [tbl], or [None]
     if no such binding exists. *)
@@ -123,7 +125,7 @@ val find_and_remove : ('a, 'b) t -> 'a -> 'b option
     to [data] is added to [tbl].
 
     This is functionally equivalent to {!remove}[ tbl key] followed by
-    {!add}[ tbl ~key ~data]. *)
+    {!shadow}[ tbl ~key ~data]. *)
 val set : ('a, 'b) t -> key:'a -> data:'b -> unit
 
 (** Same as {!set} but returns the previous binding, if any. *)
@@ -199,8 +201,8 @@ val to_seq_keys : ('a, _) t -> 'a Seq.t
 (** Same as [Seq.map snd (to_seq m)]. *)
 val to_seq_values : (_, 'b) t -> 'b Seq.t
 
-(** Add the given bindings to the table, using {!add}. *)
-val add_seq : ('a, 'b) t -> ('a * 'b) Seq.t -> unit
+(** Add the given bindings to the table, using {!shadow}. *)
+val shadow_seq : ('a, 'b) t -> ('a * 'b) Seq.t -> unit
 
 (** Add the given bindings to the table, using {!set}. *)
 val set_seq : ('a, 'b) t -> ('a * 'b) Seq.t -> unit
@@ -326,3 +328,21 @@ val replace : ('a, 'b) t -> key:'a -> data:'b -> unit
 val replace_seq : ('a, 'b) t -> ('a * 'b) Seq.t -> unit
 [@@ocaml.deprecated "[since 2026-08] Use [Hashtbl.set_seq]. Hint: Run [ocamlmig migrate]"]
 [@@migrate { repl = Rel.set_seq }]
+
+(** This was renamed [shadow]: [add] is a rare operation to reach for (it
+    shadows rather than replaces an existing binding), and the new name is
+    chosen to be less inviting - most callers want {!set}. Hint: Run
+    [ocamlmig migrate] to keep the exact same [add] behavior under its new
+    name. *)
+val add : ('a, 'b) t -> key:'a -> data:'b -> unit
+[@@ocaml.deprecated
+  "[since 2026-08] Renamed to [Hashtbl.shadow] (most callers want [Hashtbl.set] \
+   instead). Hint: Run [ocamlmig migrate]"]
+[@@migrate { repl = Rel.shadow }]
+
+(** This was renamed [shadow_seq], for the same reason as {!shadow}. Hint:
+    Run [ocamlmig migrate]. *)
+val add_seq : ('a, 'b) t -> ('a * 'b) Seq.t -> unit
+[@@ocaml.deprecated
+  "[since 2026-08] Renamed to [Hashtbl.shadow_seq]. Hint: Run [ocamlmig migrate]"]
+[@@migrate { repl = Rel.shadow_seq }]
