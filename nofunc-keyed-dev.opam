@@ -22,7 +22,7 @@ depends: [
   "nofunc-stdmap" {= version}
   "nofunc-stdset" {= version}
   "ppx_js_style" {>= "v0.17"}
-  "odoc" {with-doc}
+  "odoc" {>= "3.0.0"}
 ]
 build: [
   ["dune" "subst"] {dev}

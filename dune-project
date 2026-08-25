@@ -182,4 +182,6 @@
   (nofunc-stdset
    (= :version))
   (ppx_js_style
-   (>= v0.17))))
+   (>= v0.17))
+  (odoc
+   (>= 3.0.0))))
