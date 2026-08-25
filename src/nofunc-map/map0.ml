@@ -84,7 +84,7 @@ let find_first_opt t ~f = Tree.find_first_opt f t.tree
 let find_last t ~f = Tree.find_last f t.tree
 let find_last_opt t ~f = Tree.find_last_opt f t.tree
 let iter t ~f = Tree.iter (fun key data -> f ~key ~data) t.tree
-let fold t init ~f = Tree.fold (fun key data acc -> f ~key ~data acc) t.tree init
+let fold t ~init ~f = Tree.fold (fun key data acc -> f ~key ~data acc) t.tree init
 let map t ~f = { compare = t.compare; tree = Tree.map f t.tree }
 
 let mapi t ~f =

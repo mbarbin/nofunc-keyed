@@ -12,7 +12,7 @@
 module Hashtbl = Nofunc_htbl.Hashtbl
 
 let sorted_bindings tbl =
-  Hashtbl.fold tbl [] ~f:(fun ~key ~data acc -> (key, data) :: acc)
+  Hashtbl.fold tbl ~init:[] ~f:(fun ~key ~data acc -> (key, data) :: acc)
   |> List.sort (fun (k1, _) (k2, _) -> Int.compare k1 k2)
 ;;
 
@@ -59,7 +59,7 @@ let%expect_test "iter / fold / filter_map_inplace" =
   Hashtbl.iter tbl ~f:(fun ~key:_ ~data:_ -> incr count);
   print_dyn (!count |> Dyn.int);
   [%expect {| 2 |}];
-  let sum = Hashtbl.fold tbl 0 ~f:(fun ~key ~data:_ acc -> acc + key) in
+  let sum = Hashtbl.fold tbl ~init:0 ~f:(fun ~key ~data:_ acc -> acc + key) in
   print_dyn (sum |> Dyn.int);
   [%expect {| 3 |}];
   Hashtbl.filter_map_inplace tbl ~f:(fun ~key ~data ->

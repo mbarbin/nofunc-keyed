@@ -124,7 +124,7 @@ let%expect_test "iter / fold / for_all / exists" =
   Map.iter m ~f:(fun ~key:_ ~data:_ -> incr count);
   print_dyn (!count |> Dyn.int);
   [%expect {| 2 |}];
-  let sum = Map.fold m 0 ~f:(fun ~key ~data:_ acc -> acc + key) in
+  let sum = Map.fold m ~init:0 ~f:(fun ~key ~data:_ acc -> acc + key) in
   print_dyn (sum |> Dyn.int);
   [%expect {| 3 |}];
   print_dyn (Map.for_all m ~f:(fun ~key ~data:_ -> key > 0) |> Dyn.bool);

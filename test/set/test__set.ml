@@ -106,7 +106,7 @@ let%expect_test "iter / fold / for_all / exists" =
   Set.iter s ~f:(fun _ -> incr count);
   print_dyn (!count |> Dyn.int);
   [%expect {| 3 |}];
-  let sum = Set.fold s 0 ~f:(fun ~key acc -> acc + key) in
+  let sum = Set.fold s ~init:0 ~f:(fun ~key acc -> acc + key) in
   print_dyn (sum |> Dyn.int);
   [%expect {| 6 |}];
   print_dyn (Set.for_all s ~f:(fun x -> x > 0) |> Dyn.bool);

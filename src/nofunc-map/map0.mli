@@ -220,11 +220,11 @@ val find_last_opt : ('key, 'a) t -> f:('key -> bool) -> ('key * 'a) option
     increasing order with respect to the ordering over the type of the keys. *)
 val iter : ('key, 'a) t -> f:(key:'key -> data:'a -> unit) -> unit
 
-(** [fold m init ~f] computes [(f kN dN ... (f k1 d1 init)...)], where
+(** [fold m ~init ~f] computes [(f kN dN ... (f k1 d1 init)...)], where
     [k1 ... kN] are the keys of all bindings in [m] (in increasing order), and
     [d1 ... dN] are the associated data. [key] and [data] are labeled to avoid
     mixing them up with the accumulator. *)
-val fold : ('key, 'a) t -> 'acc -> f:(key:'key -> data:'a -> 'acc -> 'acc) -> 'acc
+val fold : ('key, 'a) t -> init:'acc -> f:(key:'key -> data:'a -> 'acc -> 'acc) -> 'acc
 
 (** {1:transforming Transforming} *)
 

@@ -156,7 +156,7 @@ val iter : ('a, 'b) t -> f:(key:'a -> data:'b -> unit) -> unit
     Other comments for {!iter} apply as well. *)
 val filter_map_inplace : ('a, 'b) t -> f:(key:'a -> data:'b -> 'b option) -> unit
 
-(** [fold tbl init ~f] computes [(f kN dN ... (f k1 d1 init)...)], where
+(** [fold tbl ~init ~f] computes [(f kN dN ... (f k1 d1 init)...)], where
     [k1 ... kN] are the keys of all bindings in [tbl], and [d1 ... dN] are the
     associated values. Each binding is presented exactly once to [f]. [key] and
     [data] are labeled to avoid mixing them up with the accumulator.
@@ -173,7 +173,7 @@ val filter_map_inplace : ('a, 'b) t -> f:(key:'a -> data:'b -> 'b option) -> uni
 
     The behavior is not specified if the hash table is modified by [f] during
     the iteration. *)
-val fold : ('a, 'b) t -> 'acc -> f:(key:'a -> data:'b -> 'acc -> 'acc) -> 'acc
+val fold : ('a, 'b) t -> init:'acc -> f:(key:'a -> data:'b -> 'acc -> 'acc) -> 'acc
 
 (** [length tbl] returns the number of bindings in [tbl]. It takes constant
     time. Multiple bindings are counted once each, so [length] gives the number

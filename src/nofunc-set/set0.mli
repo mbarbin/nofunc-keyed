@@ -180,10 +180,10 @@ val find_last_opt : 'elt t -> f:('elt -> bool) -> 'elt option
     the type of the elements. *)
 val iter : 'elt t -> f:('elt -> unit) -> unit
 
-(** [fold s init ~f] computes [(f xN ... (f x2 (f x1 init))...)], where
+(** [fold s ~init ~f] computes [(f xN ... (f x2 (f x1 init))...)], where
     [x1 ... xN] are the elements of [s], in increasing order. [key] is labeled
     to avoid mixing it up with the accumulator. *)
-val fold : 'elt t -> 'acc -> f:(key:'elt -> 'acc -> 'acc) -> 'acc
+val fold : 'elt t -> init:'acc -> f:(key:'elt -> 'acc -> 'acc) -> 'acc
 
 (** {1:transforming Transforming} *)
 
