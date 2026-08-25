@@ -43,12 +43,25 @@ let check_same_compare t1 t2 ~fct =
 
 let merge t1 t2 ~f =
   check_same_compare t1 t2 ~fct:"merge";
-  { compare = t1.compare; tree = Tree.merge ~compare:t1.compare f t1.tree t2.tree }
+  { compare = t1.compare
+  ; tree =
+      Tree.merge
+        ~compare:t1.compare
+        (fun key left right -> f ~key ~left ~right)
+        t1.tree
+        t2.tree
+  }
 ;;
 
 let union t1 t2 ~f =
   check_same_compare t1 t2 ~fct:"union";
-  let res = Tree.union ~compare:t1.compare f t1.tree t2.tree in
+  let res =
+    Tree.union
+      ~compare:t1.compare
+      (fun key left right -> f ~key ~left ~right)
+      t1.tree
+      t2.tree
+  in
   if t1.tree == res
   then t1
   else if t2.tree == res
@@ -100,12 +113,12 @@ let mem t key = Tree.mem ~compare:t.compare key t.tree
 
 let equal t1 t2 ~f =
   check_same_compare t1 t2 ~fct:"equal";
-  Tree.equal ~compare:t1.compare f t1.tree t2.tree
+  Tree.equal ~compare:t1.compare (fun left right -> f ~left ~right) t1.tree t2.tree
 ;;
 
 let compare t1 t2 ~f =
   check_same_compare t1 t2 ~fct:"compare";
-  Tree.compare ~compare:t1.compare f t1.tree t2.tree
+  Tree.compare ~compare:t1.compare (fun left right -> f ~left ~right) t1.tree t2.tree
 ;;
 
 let for_all t ~f = Tree.for_all (fun key data -> f ~key ~data) t.tree

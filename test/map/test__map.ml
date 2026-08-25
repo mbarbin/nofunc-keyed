@@ -179,25 +179,29 @@ let%expect_test "merge / union" =
   let m1 = Map.of_list (module Int) [ 1, "one"; 2, "two" ] in
   let m2 = Map.of_list (module Int) [ 2, "TWO"; 3, "three" ] in
   let merged =
-    Map.merge m1 m2 ~f:(fun _ v1 v2 ->
-      match v1, v2 with
+    Map.merge m1 m2 ~f:(fun ~key:_ ~left ~right ->
+      match left, right with
       | Some v, None | None, Some v -> Some v
       | Some v1, Some v2 -> Some (v1 ^ "/" ^ v2)
       | None, None -> None [@coverage off])
   in
   print_bindings merged;
   [%expect {| [ (1, "one"); (2, "two/TWO"); (3, "three") ] |}];
-  let union = Map.union m1 m2 ~f:(fun _ v1 _v2 -> Some v1) in
+  let union = Map.union m1 m2 ~f:(fun ~key:_ ~left ~right:_ -> Some left) in
   print_bindings union;
   [%expect {| [ (1, "one"); (2, "two"); (3, "three") ] |}];
   (* Union with an empty map on either side returns the other map physically
      unchanged; the combining function below is never called in that case. *)
   let empty = Map.empty (module Int) in
   require
-    (phys_equal m1 (Map.union m1 empty ~f:(fun _ v1 _ -> (Some v1 [@coverage off]))));
+    (phys_equal
+       m1
+       (Map.union m1 empty ~f:(fun ~key:_ ~left ~right:_ -> (Some left [@coverage off]))));
   [%expect {||}];
   require
-    (phys_equal m1 (Map.union empty m1 ~f:(fun _ v1 _ -> (Some v1 [@coverage off]))));
+    (phys_equal
+       m1
+       (Map.union empty m1 ~f:(fun ~key:_ ~left ~right:_ -> (Some left [@coverage off]))));
   [%expect {||}];
   ()
 ;;
@@ -206,11 +210,12 @@ let%expect_test "equal / compare" =
   let m1 = Map.of_list (module Int) [ 1, "one"; 2, "two" ] in
   let m2 = Map.of_list (module Int) [ 1, "one"; 2, "two" ] in
   let m3 = Map.of_list (module Int) [ 1, "one"; 2, "TWO" ] in
-  print_dyn (Map.equal m1 m2 ~f:String.equal |> Dyn.bool);
+  print_dyn (Map.equal m1 m2 ~f:(fun ~left ~right -> String.equal left right) |> Dyn.bool);
   [%expect {| true |}];
-  print_dyn (Map.equal m1 m3 ~f:String.equal |> Dyn.bool);
+  print_dyn (Map.equal m1 m3 ~f:(fun ~left ~right -> String.equal left right) |> Dyn.bool);
   [%expect {| false |}];
-  print_dyn (Map.compare m1 m2 ~f:String.compare |> Dyn.int);
+  print_dyn
+    (Map.compare m1 m2 ~f:(fun ~left ~right -> String.compare left right) |> Dyn.int);
   [%expect {| 0 |}];
   ()
 ;;
@@ -242,7 +247,8 @@ let%expect_test "different compare functions" =
   let m1 = Map.of_list (module Int) [ 1, "one" ] in
   let m2 = Map.of_list (module Int_rev) [ 2, "two"; 1, "one" ] in
   require_does_raise (fun () ->
-    Map.merge m1 m2 ~f:(fun (_ : int) _ _ : _ option -> (assert false [@coverage off])));
+    Map.merge m1 m2 ~f:(fun ~key:(_ : int) ~left:_ ~right:_ : _ option ->
+      (assert false [@coverage off])));
   [%expect {| Invalid_argument("Map.merge: maps have different compare functions.") |}];
   ()
 ;;

@@ -112,29 +112,33 @@ val remove : ('key, 'a) t -> 'key -> ('key, 'a) t
     and of [m2]. The presence of each such binding, and the corresponding value,
     is determined with the function [f]. In terms of the [find_opt] operation,
     we have
-    [find_opt (merge m1 m2 ~f) key = f key (find_opt m1 key) (find_opt m2 key)]
-    for any key [key], provided that [f key None None = None]. Raise
-    [Invalid_argument] if the maps have different compare functions. *)
+    [find_opt (merge m1 m2 ~f) key = f ~key ~left:(find_opt m1 key) ~right:(find_opt m2 key)]
+    for any key [key], provided that [f ~key ~left:None ~right:None = None].
+    [left] and [right] are labeled to avoid mixing up which map each value
+    comes from. Raise [Invalid_argument] if the maps have different compare
+    functions. *)
 val merge
   :  ('key, 'a) t
   -> ('key, 'b) t
-  -> f:('key -> 'a option -> 'b option -> 'c option)
+  -> f:(key:'key -> left:'a option -> right:'b option -> 'c option)
   -> ('key, 'c) t
 
 (** [union m1 m2 ~f] computes a map whose keys are a subset of the keys of [m1]
     and of [m2]. When the same binding is defined in both arguments, the
     function [f] is used to combine them. This is a special case of [merge]:
     [union m1 m2 ~f] is equivalent to [merge m1 m2 ~f:f'], where
-    - [f' _key None None = None]
-    - [f' _key (Some v) None = Some v]
-    - [f' _key None (Some v) = Some v]
-    - [f' key (Some v1) (Some v2) = f key v1 v2]
+    - [f' ~key ~left:None ~right:None = None]
+    - [f' ~key ~left:(Some v) ~right:None = Some v]
+    - [f' ~key ~left:None ~right:(Some v) = Some v]
+    - [f' ~key ~left:(Some v1) ~right:(Some v2) = f ~key ~left:v1 ~right:v2]
 
-    Raise [Invalid_argument] if the maps have different compare functions. *)
+    [left] and [right] are labeled to avoid mixing up which map each value
+    comes from, especially since both have the same type. Raise
+    [Invalid_argument] if the maps have different compare functions. *)
 val union
   :  ('key, 'a) t
   -> ('key, 'a) t
-  -> f:('key -> 'a -> 'a -> 'a option)
+  -> f:(key:'key -> left:'a -> right:'a -> 'a option)
   -> ('key, 'a) t
 
 (** Return the number of bindings of a map. *)
@@ -286,14 +290,18 @@ val mem : ('key, _) t -> 'key -> bool
 
 (** [equal m1 m2 ~f] tests whether the maps [m1] and [m2] are equal, that is,
     contain equal keys and associate them with equal data. [f] is the equality
-    predicate used to compare the data associated with the keys. Raise
-    [Invalid_argument] if the maps have different compare functions. *)
-val equal : ('key, 'a) t -> ('key, 'a) t -> f:('a -> 'a -> bool) -> bool
+    predicate used to compare the data associated with the keys. [left] and
+    [right] are labeled to avoid mixing up which map each value comes from,
+    especially since both have the same type. Raise [Invalid_argument] if the
+    maps have different compare functions. *)
+val equal : ('key, 'a) t -> ('key, 'a) t -> f:(left:'a -> right:'a -> bool) -> bool
 
 (** Total ordering between maps. [f] is a total ordering used to compare data
-    associated with equal keys in the two maps. Raise [Invalid_argument] if the
-    maps have different compare functions. *)
-val compare : ('key, 'a) t -> ('key, 'a) t -> f:('a -> 'a -> int) -> int
+    associated with equal keys in the two maps. [left] and [right] are labeled
+    to avoid mixing up which map each value comes from, especially since both
+    have the same type. Raise [Invalid_argument] if the maps have different
+    compare functions. *)
+val compare : ('key, 'a) t -> ('key, 'a) t -> f:(left:'a -> right:'a -> int) -> int
 
 (** [for_all m ~f] checks if all the bindings of the map satisfy the predicate
     [f]. [key] and [data] are labeled to avoid mixing them up. *)
