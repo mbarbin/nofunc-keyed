@@ -58,7 +58,7 @@ jobs:
           if [ "${{ matrix.ocaml-version }}" = "4.14" ]; then
             echo "PACKAGES=nofunc-map,nofunc-set,nofunc-stdmap,nofunc-stdset" >> "$GITHUB_ENV"
           else
-            echo "PACKAGES=nofunc-hset,nofunc-htbl,nofunc-keyed-tests,nofunc-map,nofunc-set,nofunc-stdhset,nofunc-stdhtbl,nofunc-stdmap,nofunc-stdset" >> "$GITHUB_ENV"
+            echo "PACKAGES=nofunc-hset,nofunc-htbl,nofunc-map,nofunc-set,nofunc-stdhset,nofunc-stdhtbl,nofunc-stdmap,nofunc-stdset,nofunc-keyed-tests" >> "$GITHUB_ENV"
           fi
 
       - name: Setup Dune
