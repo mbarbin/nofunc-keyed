@@ -10,7 +10,7 @@ module type OrderedType = sig
   val compare : t -> t -> int
 end
 
-module Tree = Nofunc_stdmap_stdlib.Map0
+module Tree = Nofunc_map_stdlib.Map0
 
 type ('key, !+'a) t =
   { compare : 'key Tree.compare

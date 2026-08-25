@@ -4,7 +4,7 @@
 (*  SPDX-License-Identifier: LGPL-2.1-or-later WITH OCaml-LGPL-linking-exception   *)
 (***********************************************************************************)
 
-module Tbl = Nofunc_stdhtbl_stdlib.Hashtbl0
+module Tbl = Nofunc_htbl_stdlib.Hashtbl0
 
 module type HashedType = Stdlib.Hashtbl.HashedType
 module type SeededHashedType = Stdlib.Hashtbl.SeededHashedType

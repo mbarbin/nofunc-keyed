@@ -1,0 +1,5 @@
+(library
+ (name nofunc_map_stdlib)
+ (public_name nofunc-map.stdlib)
+ (instrumentation
+  (backend bisect_ppx)))

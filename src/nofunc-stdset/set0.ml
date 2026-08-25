@@ -10,7 +10,7 @@ module type OrderedType = sig
   val compare : t -> t -> int
 end
 
-module Tree = Nofunc_stdset_stdlib.Set0
+module Tree = Nofunc_set_stdlib.Set0
 
 type 'elt t =
   { compare : 'elt Tree.compare

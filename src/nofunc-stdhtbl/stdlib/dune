@@ -1,5 +1,0 @@
-(library
- (name nofunc_stdhtbl_stdlib)
- (public_name nofunc-stdhtbl.stdlib)
- (instrumentation
-  (backend bisect_ppx)))

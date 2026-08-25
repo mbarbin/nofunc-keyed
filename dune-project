@@ -67,21 +67,27 @@
  (synopsis "Hashtbl adapted from Stdlib but no functors")
  (depends
   (ocaml
-   (>= 5.2))))
+   (>= 5.2))
+  (nofunc-htbl
+   (= :version))))
 
 (package
  (name nofunc-stdmap)
  (synopsis "Map adapted from Stdlib but no functors")
  (depends
   (ocaml
-   (>= 4.14))))
+   (>= 4.14))
+  (nofunc-map
+   (= :version))))
 
 (package
  (name nofunc-stdset)
  (synopsis "Set adapted from Stdlib but no functors")
  (depends
   (ocaml
-   (>= 4.14))))
+   (>= 4.14))
+  (nofunc-set
+   (= :version))))
 
 (package
  (name nofunc-keyed-dev)
