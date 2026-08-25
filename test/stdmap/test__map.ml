@@ -28,6 +28,13 @@ let%expect_test "singleton" =
   [%expect {| 1 |}];
   print_bindings m;
   [%expect {| [ (1, "one") ] |}];
+  (* [singleton] builds its one-node tree directly, without calling the
+     comparator - it only stores it for later use. Add bindings on both
+     sides of the existing key to exercise that stored comparator. *)
+  let m = Map.add 2 "two" m in
+  let m = Map.add 0 "zero" m in
+  print_bindings m;
+  [%expect {| [ (0, "zero"); (1, "one"); (2, "two") ] |}];
   ()
 ;;
 
