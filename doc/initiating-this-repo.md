@@ -95,3 +95,43 @@ The second step was to initiate the part of the repository that relates to the
 1. Create a new module `Hashset` for hash sets based on `Hashtbl` using `unit`
    as data. Adapt the interface and implementation to always have at most one
    binding per element in the set (`add` performs a `replace`).
+
+## Step 4
+
+The fourth step started the `non-std` flavor of the packages (`nofunc-map`,
+`nofunc-set`, `nofunc-htbl`, `nofunc-hset`), mentioned in the [Style &
+API](../README.md#style--api) section of the README, and began differentiating
+it from the `std` flavor.
+
+1. Create an empty skeleton for each of the four `non-std` packages: a `dune`
+   file and an empty library file (license header only, no code), mirroring the
+   scaffolding of their `std` counterparts.
+
+2. Move the private `<pkg>.stdlib` sub-library out of each `std` package
+   (`nofunc-stdmap/stdlib`, `nofunc-stdset/stdlib`, `nofunc-stdhtbl/stdlib`) and
+   into the matching `non-std` package, at the same `stdlib/` sub-path and
+   under the same `.stdlib` sub-package naming convention (e.g.
+   `nofunc-map.stdlib`). This is the internal, functorless-but-explicit-compare
+   building block copied from the OCaml Stdlib (see Step 1 and Step 2); moving
+   it does not change its code. Each `std` package now depends on its `non-std`
+   sibling's `.stdlib` sub-library instead of on a private sub-library of its
+   own (e.g. `nofunc-stdmap` depends on `nofunc-map.stdlib`), and declares an
+   opam dependency on that sibling package.
+
+   `nofunc-stdhset` is not affected: it has no `stdlib` sub-library of its own,
+   it builds directly on top of `nofunc-stdhtbl`.
+
+3. Add `ordering` as a dependency of `nofunc-map.stdlib` and
+   `nofunc-set.stdlib`, and require the `compare` function taken by every
+   function in these `stdlib` building blocks to return `Ordering.t` instead of
+   `int`. Pattern-match each call site on `Ordering.Eq` / `Ordering.Lt` /
+   `Ordering.Gt`, annotating the `compare` argument as `~(compare : _ compare)`
+   so the constructors resolve without qualification.
+
+4. In `nofunc-stdmap` and `nofunc-stdset`, store two closures in the record
+   built from the `Ord.compare` handed in at creation site (`empty`,
+   `singleton`, `of_list`, `of_seq`): `compare_int`, the original int-returning
+   closure, kept only for the physical-equality consistency check between two
+   structures (`check_same_compare`); and `compare`, an `Ordering`-returning
+   closure derived from it via `Ordering.of_int`, used for the actual tree
+   operations. Both packages depend on `ordering` directly for this.
