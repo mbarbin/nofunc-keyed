@@ -12,7 +12,7 @@
 module Hashtbl = Nofunc_htbl.Hashtbl
 
 let sorted_bindings tbl =
-  Hashtbl.fold tbl [] ~f:(fun k v acc -> (k, v) :: acc)
+  Hashtbl.fold tbl [] ~f:(fun ~key ~data acc -> (key, data) :: acc)
   |> List.sort (fun (k1, _) (k2, _) -> Int.compare k1 k2)
 ;;
 
@@ -26,13 +26,13 @@ let%expect_test "create / length / add / find / find_opt / find_all / mem" =
   Hashtbl.add tbl ~key:1 ~data:"ONE";
   print_dyn (Hashtbl.length tbl |> Dyn.int);
   [%expect {| 2 |}];
-  print_dyn (Hashtbl.find tbl ~key:1 |> Dyn.string);
+  print_dyn (Hashtbl.find tbl 1 |> Dyn.string);
   [%expect {| "ONE" |}];
-  print_dyn (Hashtbl.find_opt tbl ~key:1 |> Dyn.option Dyn.string);
+  print_dyn (Hashtbl.find_opt tbl 1 |> Dyn.option Dyn.string);
   [%expect {| Some "ONE" |}];
-  print_dyn (Hashtbl.find_all tbl ~key:1 |> Dyn.list Dyn.string);
+  print_dyn (Hashtbl.find_all tbl 1 |> Dyn.list Dyn.string);
   [%expect {| [ "ONE"; "one" ] |}];
-  print_dyn (Hashtbl.mem tbl ~key:1 |> Dyn.bool);
+  print_dyn (Hashtbl.mem tbl 1 |> Dyn.bool);
   [%expect {| true |}];
   ()
 ;;
@@ -43,9 +43,9 @@ let%expect_test "replace / find_and_replace / find_and_remove / remove" =
   Hashtbl.replace tbl ~key:2 ~data:"two";
   print_dyn (Hashtbl.find_and_replace tbl ~key:1 ~data:"ONE" |> Dyn.option Dyn.string);
   [%expect {| Some "one" |}];
-  print_dyn (Hashtbl.find_and_remove tbl ~key:2 |> Dyn.option Dyn.string);
+  print_dyn (Hashtbl.find_and_remove tbl 2 |> Dyn.option Dyn.string);
   [%expect {| Some "two" |}];
-  Hashtbl.remove tbl ~key:1;
+  Hashtbl.remove tbl 1;
   print_dyn (Hashtbl.length tbl |> Dyn.int);
   [%expect {| 0 |}];
   ()
@@ -56,13 +56,14 @@ let%expect_test "iter / fold / filter_map_inplace" =
   Hashtbl.replace tbl ~key:1 ~data:"one";
   Hashtbl.replace tbl ~key:2 ~data:"two";
   let count = ref 0 in
-  Hashtbl.iter tbl ~f:(fun _ _ -> incr count);
+  Hashtbl.iter tbl ~f:(fun ~key:_ ~data:_ -> incr count);
   print_dyn (!count |> Dyn.int);
   [%expect {| 2 |}];
-  let sum = Hashtbl.fold tbl 0 ~f:(fun k _ acc -> acc + k) in
+  let sum = Hashtbl.fold tbl 0 ~f:(fun ~key ~data:_ acc -> acc + key) in
   print_dyn (sum |> Dyn.int);
   [%expect {| 3 |}];
-  Hashtbl.filter_map_inplace tbl ~f:(fun k v -> if k = 1 then Some v else None);
+  Hashtbl.filter_map_inplace tbl ~f:(fun ~key ~data ->
+    if key = 1 then Some data else None);
   print_bindings tbl;
   [%expect {| [ (1, "one") ] |}];
   ()

@@ -84,15 +84,15 @@ val add : ('key, 'a) t -> key:'key -> data:'a -> ('key, 'a) t
     [data :: find m ~key] if [key] was bound in [m] and [[data]] otherwise. *)
 val add_to_list : ('key, 'a list) t -> key:'key -> data:'a -> ('key, 'a list) t
 
-(** [update m ~key ~f] returns a map containing the same bindings as [m], except
+(** [update m key ~f] returns a map containing the same bindings as [m], except
     for the binding of [key]. Depending on the value of [y] where [y] is
-    [f (find_opt m ~key)], the binding of [key] is added, removed or updated. If
+    [f (find_opt m key)], the binding of [key] is added, removed or updated. If
     [y] is [None], the binding is removed if it exists; otherwise, if [y] is
     [Some z] then [key] is associated to [z] in the resulting map. If [key] was
     already bound in [m] to a value that is physically equal to [z], [m] is
     returned unchanged (the result of the function is then physically equal to
     [m]). *)
-val update : ('key, 'a) t -> key:'key -> f:('a option -> 'a option) -> ('key, 'a) t
+val update : ('key, 'a) t -> 'key -> f:('a option -> 'a option) -> ('key, 'a) t
 
 (** [singleton (module Ord) ~key ~data] returns the one-element map that contains
     a binding [data] for [key], using [Ord.compare] for ordering. *)
@@ -102,17 +102,17 @@ val singleton
   -> data:'a
   -> ('key, 'a) t
 
-(** [remove m ~key] returns a map containing the same bindings as [m], except for
+(** [remove m key] returns a map containing the same bindings as [m], except for
     [key] which is unbound in the returned map. If [key] was not in [m], [m] is
     returned unchanged (the result of the function is then physically equal to
     [m]). *)
-val remove : ('key, 'a) t -> key:'key -> ('key, 'a) t
+val remove : ('key, 'a) t -> 'key -> ('key, 'a) t
 
 (** [merge m1 m2 ~f] computes a map whose keys are a subset of the keys of [m1]
     and of [m2]. The presence of each such binding, and the corresponding value,
     is determined with the function [f]. In terms of the [find_opt] operation,
     we have
-    [find_opt (merge m1 m2 ~f) ~key = f key (find_opt m1 ~key) (find_opt m2 ~key)]
+    [find_opt (merge m1 m2 ~f) key = f key (find_opt m1 key) (find_opt m2 key)]
     for any key [key], provided that [f key None None = None]. Raise
     [Invalid_argument] if the maps have different compare functions. *)
 val merge
@@ -173,13 +173,13 @@ val choose_opt : ('key, 'a) t -> ('key * 'a) option
 
 (** {1:searching Searching} *)
 
-(** [find m ~key] returns the current value of [key] in [m], or raises
+(** [find m key] returns the current value of [key] in [m], or raises
     [Not_found] if no binding for [key] exists. *)
-val find : ('key, 'a) t -> key:'key -> 'a
+val find : ('key, 'a) t -> 'key -> 'a
 
-(** [find_opt m ~key] returns [Some v] if the current value of [key] in [m] is
+(** [find_opt m key] returns [Some v] if the current value of [key] in [m] is
     [v], or [None] if no binding for [key] exists. *)
-val find_opt : ('key, 'a) t -> key:'key -> 'a option
+val find_opt : ('key, 'a) t -> 'key -> 'a option
 
 (** [find_first m ~f], where [f] is a monotonically increasing function, returns
     the binding of [m] with the lowest key [k] such that [f k], or raises
@@ -227,42 +227,50 @@ val fold : ('key, 'a) t -> 'acc -> f:(key:'key -> data:'a -> 'acc -> 'acc) -> 'a
     order with respect to the ordering over the type of the keys. *)
 val map : ('key, 'a) t -> f:('a -> 'b) -> ('key, 'b) t
 
-(** Same as {!map}, but the function receives as arguments both the key and the
-    associated value for each binding of the map. *)
-val mapi : ('key, 'a) t -> f:('key -> 'a -> 'b) -> ('key, 'b) t
+(** Same as {!map}, but the function receives as arguments both the key and
+    the associated value for each binding of the map. [key] and [data] are
+    labeled to avoid mixing them up. *)
+val mapi : ('key, 'a) t -> f:(key:'key -> data:'a -> 'b) -> ('key, 'b) t
 
 (** [filter m ~f] returns the map with all the bindings in [m] that satisfy
     predicate [p]. If every binding in [m] satisfies [f], [m] is returned
-    unchanged (the result of the function is then physically equal to [m]) *)
-val filter : ('key, 'a) t -> f:('key -> 'a -> bool) -> ('key, 'a) t
+    unchanged (the result of the function is then physically equal to [m]).
+    [key] and [data] are labeled to avoid mixing them up. *)
+val filter : ('key, 'a) t -> f:(key:'key -> data:'a -> bool) -> ('key, 'a) t
 
 (** [filter_map m ~f] applies the function [f] to every binding of [m], and
     builds a map from the results. For each binding [(k, v)] in the input map:
-    - if [f k v] is [None] then [k] is not in the result,
-    - if [f k v] is [Some v'] then the binding [(k, v')] is in the output map.
+    - if [f ~key:k ~data:v] is [None] then [k] is not in the result,
+    - if [f ~key:k ~data:v] is [Some v'] then the binding [(k, v')] is in the
+      output map.
 
     For example, the following function on maps whose values are lists
     {[
-    filter_map m ~f:(fun _k li ->
+    filter_map m ~f:(fun ~key:_ ~data:li ->
       match li with
       | [] -> None
       | _ :: tl -> Some tl)
     ]}
     drops all bindings of [m] whose value is an empty list, and pops the first
-    element of each value that is non-empty. *)
-val filter_map : ('key, 'a) t -> f:('key -> 'a -> 'b option) -> ('key, 'b) t
+    element of each value that is non-empty. [key] and [data] are labeled to
+    avoid mixing them up. *)
+val filter_map : ('key, 'a) t -> f:(key:'key -> data:'a -> 'b option) -> ('key, 'b) t
 
 (** [partition m ~f] returns a pair of maps [(m1, m2)], where [m1] contains all
     the bindings of [m] that satisfy the predicate [f], and [m2] is the map with
-    all the bindings of [m] that do not satisfy [f]. *)
-val partition : ('key, 'a) t -> f:('key -> 'a -> bool) -> ('key, 'a) t * ('key, 'a) t
+    all the bindings of [m] that do not satisfy [f]. [key] and [data] are
+    labeled to avoid mixing them up. *)
+val partition
+  :  ('key, 'a) t
+  -> f:(key:'key -> data:'a -> bool)
+  -> ('key, 'a) t * ('key, 'a) t
 
-(** [split m ~key] returns a triple [(l, data, r)], where [l] is the map with all
+(** [split m key] returns a triple [(l, data, r)], where [l] is the map with all
     the bindings of [m] whose key is strictly less than [key]; [r] is the map
     with all the bindings of [m] whose key is strictly greater than [key];
     [data] is [None] if [m] contains no binding for [key], or [Some v] if [m]
     binds [v] to [key]. *)
-val split : ('key, 'a) t -> key:'key -> ('key, 'a) t * 'a option * ('key, 'a) t
+val split : ('key, 'a) t -> 'key -> ('key, 'a) t * 'a option * ('key, 'a) t
 
 (** {1:predicates Predicates and comparisons} *)
 
@@ -272,9 +280,9 @@ val is_empty : _ t -> bool
 (** Test whether a map has exactly one element or not. *)
 val is_singleton : _ t -> bool
 
-(** [mem m ~key] returns [true] if [m] contains a binding for [key], and [false]
+(** [mem m key] returns [true] if [m] contains a binding for [key], and [false]
     otherwise. *)
-val mem : ('key, _) t -> key:'key -> bool
+val mem : ('key, _) t -> 'key -> bool
 
 (** [equal m1 m2 ~f] tests whether the maps [m1] and [m2] are equal, that is,
     contain equal keys and associate them with equal data. [f] is the equality
@@ -288,12 +296,12 @@ val equal : ('key, 'a) t -> ('key, 'a) t -> f:('a -> 'a -> bool) -> bool
 val compare : ('key, 'a) t -> ('key, 'a) t -> f:('a -> 'a -> int) -> int
 
 (** [for_all m ~f] checks if all the bindings of the map satisfy the predicate
-    [f]. *)
-val for_all : ('key, 'a) t -> f:('key -> 'a -> bool) -> bool
+    [f]. [key] and [data] are labeled to avoid mixing them up. *)
+val for_all : ('key, 'a) t -> f:(key:'key -> data:'a -> bool) -> bool
 
 (** [exists m ~f] checks if at least one binding of the map satisfies the
-    predicate [f]. *)
-val exists : ('key, 'a) t -> f:('key -> 'a -> bool) -> bool
+    predicate [f]. [key] and [data] are labeled to avoid mixing them up. *)
+val exists : ('key, 'a) t -> f:(key:'key -> data:'a -> bool) -> bool
 
 (** {1:converting Converting} *)
 
@@ -310,9 +318,9 @@ val to_seq : ('key, 'a) t -> ('key * 'a) Seq.t
 (** Iterate on the whole map, in descending order of keys. *)
 val to_rev_seq : ('key, 'a) t -> ('key * 'a) Seq.t
 
-(** [to_seq_from m ~key] iterates on a subset of the bindings of [m], in
+(** [to_seq_from m key] iterates on a subset of the bindings of [m], in
     ascending order of keys, from [key] or above. *)
-val to_seq_from : ('key, 'a) t -> key:'key -> ('key * 'a) Seq.t
+val to_seq_from : ('key, 'a) t -> 'key -> ('key * 'a) Seq.t
 
 (** Add the given bindings to the map, in order. *)
 val add_seq : ('key, 'a) t -> ('key * 'a) Seq.t -> ('key, 'a) t

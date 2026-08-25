@@ -50,11 +50,11 @@ let%expect_test "add / update / remove" =
   let m2 = Map.add m1 ~key:2 ~data:two in
   require (phys_equal m1 m2);
   [%expect {||}];
-  let m = Map.update m ~key:1 ~f:(fun v -> Option.map String.uppercase_ascii v) in
-  print_binding (1, Map.find m ~key:1);
+  let m = Map.update m 1 ~f:(fun v -> Option.map String.uppercase_ascii v) in
+  print_binding (1, Map.find m 1);
   [%expect {| (1, "ONE") |}];
-  let m = Map.remove m ~key:2 in
-  print_dyn (Map.mem m ~key:2 |> Dyn.bool);
+  let m = Map.remove m 2 in
+  print_dyn (Map.mem m 2 |> Dyn.bool);
   [%expect {| false |}];
   ()
 ;;
@@ -63,7 +63,7 @@ let%expect_test "add_to_list" =
   let m = Map.empty (module Int) in
   let m = Map.add_to_list m ~key:3 ~data:"a" in
   let m = Map.add_to_list m ~key:3 ~data:"b" in
-  print_dyn (Map.find m ~key:3 |> Dyn.list Dyn.string);
+  print_dyn (Map.find m 3 |> Dyn.list Dyn.string);
   [%expect {| [ "b"; "a" ] |}];
   ()
 ;;
@@ -72,15 +72,15 @@ let%expect_test "of_list / mem / find / find_opt" =
   let m = Map.of_list (module Int) [ 3, "three"; 1, "one"; 2, "two"; 1, "ONE" ] in
   print_bindings m;
   [%expect {| [ (1, "ONE"); (2, "two"); (3, "three") ] |}];
-  print_dyn (Map.mem m ~key:2 |> Dyn.bool);
+  print_dyn (Map.mem m 2 |> Dyn.bool);
   [%expect {| true |}];
-  print_dyn (Map.mem m ~key:4 |> Dyn.bool);
+  print_dyn (Map.mem m 4 |> Dyn.bool);
   [%expect {| false |}];
-  print_dyn (Map.find m ~key:2 |> Dyn.string);
+  print_dyn (Map.find m 2 |> Dyn.string);
   [%expect {| "two" |}];
-  require_does_raise (fun () -> Map.find m ~key:4);
+  require_does_raise (fun () -> Map.find m 4);
   [%expect {| Not_found |}];
-  print_dyn (Map.find_opt m ~key:4 |> Dyn.option Dyn.string);
+  print_dyn (Map.find_opt m 4 |> Dyn.option Dyn.string);
   [%expect {| None |}];
   ()
 ;;
@@ -127,9 +127,9 @@ let%expect_test "iter / fold / for_all / exists" =
   let sum = Map.fold m 0 ~f:(fun ~key ~data:_ acc -> acc + key) in
   print_dyn (sum |> Dyn.int);
   [%expect {| 3 |}];
-  print_dyn (Map.for_all m ~f:(fun k _ -> k > 0) |> Dyn.bool);
+  print_dyn (Map.for_all m ~f:(fun ~key ~data:_ -> key > 0) |> Dyn.bool);
   [%expect {| true |}];
-  print_dyn (Map.exists m ~f:(fun k _ -> k > 1) |> Dyn.bool);
+  print_dyn (Map.exists m ~f:(fun ~key ~data:_ -> key > 1) |> Dyn.bool);
   [%expect {| true |}];
   ()
 ;;
@@ -140,22 +140,22 @@ let%expect_test "map / mapi / filter / filter_map / partition" =
     (Map.map m ~f:String.length |> Map.bindings |> Dyn.list (Dyn.pair Dyn.int Dyn.int));
   [%expect {| [ (1, 3); (2, 3); (3, 5) ] |}];
   print_dyn
-    (Map.mapi m ~f:(fun k v -> k, v)
+    (Map.mapi m ~f:(fun ~key ~data -> key, data)
      |> Map.bindings
      |> Dyn.list (Dyn.pair Dyn.int (Dyn.pair Dyn.int Dyn.string)));
   [%expect {| [ (1, (1, "one")); (2, (2, "two")); (3, (3, "three")) ] |}];
   print_dyn
-    (Map.filter m ~f:(fun k _ -> k <> 2)
+    (Map.filter m ~f:(fun ~key ~data:_ -> key <> 2)
      |> Map.bindings
      |> Dyn.list (Dyn.pair Dyn.int Dyn.string));
   [%expect {| [ (1, "one"); (3, "three") ] |}];
   print_dyn
-    (Map.filter_map m ~f:(fun k v ->
-       if k = 2 then None else Some (String.uppercase_ascii v))
+    (Map.filter_map m ~f:(fun ~key ~data ->
+       if key = 2 then None else Some (String.uppercase_ascii data))
      |> Map.bindings
      |> Dyn.list (Dyn.pair Dyn.int Dyn.string));
   [%expect {| [ (1, "ONE"); (3, "THREE") ] |}];
-  let t, f = Map.partition m ~f:(fun k _ -> k <= 1) in
+  let t, f = Map.partition m ~f:(fun ~key ~data:_ -> key <= 1) in
   print_dyn (Map.bindings t |> Dyn.list (Dyn.pair Dyn.int Dyn.string));
   [%expect {| [ (1, "one") ] |}];
   print_dyn (Map.bindings f |> Dyn.list (Dyn.pair Dyn.int Dyn.string));
@@ -165,7 +165,7 @@ let%expect_test "map / mapi / filter / filter_map / partition" =
 
 let%expect_test "split" =
   let m = Map.of_list (module Int) [ 1, "one"; 2, "two"; 3, "three" ] in
-  let l, present, r = Map.split m ~key:2 in
+  let l, present, r = Map.split m 2 in
   print_dyn (Map.bindings l |> Dyn.list (Dyn.pair Dyn.int Dyn.string));
   [%expect {| [ (1, "one") ] |}];
   print_dyn (present |> Dyn.option Dyn.string);
@@ -221,8 +221,7 @@ let%expect_test "to_seq / to_rev_seq / to_seq_from / add_seq / of_seq" =
   [%expect {| [ (1, "one"); (2, "two"); (3, "three") ] |}];
   print_dyn (Map.to_rev_seq m |> List.of_seq |> Dyn.list (Dyn.pair Dyn.int Dyn.string));
   [%expect {| [ (3, "three"); (2, "two"); (1, "one") ] |}];
-  print_dyn
-    (Map.to_seq_from m ~key:2 |> List.of_seq |> Dyn.list (Dyn.pair Dyn.int Dyn.string));
+  print_dyn (Map.to_seq_from m 2 |> List.of_seq |> Dyn.list (Dyn.pair Dyn.int Dyn.string));
   [%expect {| [ (2, "two"); (3, "three") ] |}];
   let m2 = Map.add_seq m (List.to_seq [ 4, "four" ]) in
   print_bindings m2;

@@ -11,7 +11,7 @@
 module Hashset = Nofunc_hset.Hashset
 
 let sorted_elements set =
-  Hashset.fold set [] ~f:(fun x acc -> x :: acc) |> List.sort Int.compare
+  Hashset.fold set [] ~f:(fun ~key acc -> key :: acc) |> List.sort Int.compare
 ;;
 
 let print_elements set = print_dyn (sorted_elements set |> Dyn.list Dyn.int)
@@ -41,7 +41,7 @@ let%expect_test "iter / fold / filter_inplace" =
   Hashset.iter set ~f:(fun _ -> incr count);
   print_dyn (!count |> Dyn.int);
   [%expect {| 3 |}];
-  let sum = Hashset.fold set 0 ~f:(fun x acc -> acc + x) in
+  let sum = Hashset.fold set 0 ~f:(fun ~key acc -> acc + key) in
   print_dyn (sum |> Dyn.int);
   [%expect {| 6 |}];
   (* Exercise both outcomes of the filtering predicate. *)

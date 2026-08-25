@@ -12,16 +12,16 @@ let clear = Hashtbl.clear
 let reset = Hashtbl.reset
 let copy = Hashtbl.copy
 let add t key = Hashtbl.replace t ~key ~data:()
-let mem t key = Hashtbl.mem t ~key
-let remove t key = Hashtbl.remove t ~key
-let iter t ~f = Hashtbl.iter t ~f:(fun x () -> f x)
+let mem t key = Hashtbl.mem t key
+let remove t key = Hashtbl.remove t key
+let iter t ~f = Hashtbl.iter t ~f:(fun ~key ~data:() -> f key)
 let some_unit = Some ()
 
 let filter_inplace t ~f =
-  Hashtbl.filter_map_inplace t ~f:(fun x () -> if f x then some_unit else None)
+  Hashtbl.filter_map_inplace t ~f:(fun ~key ~data:() -> if f key then some_unit else None)
 ;;
 
-let fold t init ~f = Hashtbl.fold t init ~f:(fun a () acc -> f a acc)
+let fold t init ~f = Hashtbl.fold t init ~f:(fun ~key ~data:() acc -> f ~key acc)
 let length = Hashtbl.length
 let stats = Hashtbl.stats
 let to_seq = Hashtbl.to_seq_keys

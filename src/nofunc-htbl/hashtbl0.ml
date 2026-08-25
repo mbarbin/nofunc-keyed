@@ -19,13 +19,13 @@ let clear t = Tbl.clear t.tbl
 let reset t = Tbl.reset t.tbl
 let copy t = { equal = t.equal; seeded_hash = t.seeded_hash; tbl = Tbl.copy t.tbl }
 let add t ~key ~data = Tbl.add ~seeded_hash:t.seeded_hash t.tbl key data
-let find t ~key = Tbl.find ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
-let find_opt t ~key = Tbl.find_opt ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
-let find_all t ~key = Tbl.find_all ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
-let mem t ~key = Tbl.mem ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
-let remove t ~key = Tbl.remove ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
+let find t key = Tbl.find ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
+let find_opt t key = Tbl.find_opt ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
+let find_all t key = Tbl.find_all ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
+let mem t key = Tbl.mem ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
+let remove t key = Tbl.remove ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
 
-let find_and_remove t ~key =
+let find_and_remove t key =
   Tbl.find_and_remove ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
 ;;
 
@@ -37,9 +37,9 @@ let find_and_replace t ~key ~data =
   Tbl.find_and_replace ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key data
 ;;
 
-let iter t ~f = Tbl.iter f t.tbl
-let filter_map_inplace t ~f = Tbl.filter_map_inplace f t.tbl
-let fold t init ~f = Tbl.fold f t.tbl init
+let iter t ~f = Tbl.iter (fun key data -> f ~key ~data) t.tbl
+let filter_map_inplace t ~f = Tbl.filter_map_inplace (fun key data -> f ~key ~data) t.tbl
+let fold t init ~f = Tbl.fold (fun key data acc -> f ~key ~data acc) t.tbl init
 let length t = Tbl.length t.tbl
 let stats t = Tbl.stats t.tbl
 let to_seq t = Tbl.to_seq t.tbl
