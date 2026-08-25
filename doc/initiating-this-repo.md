@@ -155,3 +155,54 @@ it from the `std` flavor.
    `ordering` where `map0.ml`/`set0.ml` need it), and rewire `hashset0.ml` to
    `Nofunc_htbl.Hashtbl` instead of `Nofunc_stdhtbl.Hashtbl`, with `nofunc-hset`
    now depending on `nofunc-htbl`. The tree builds again from this commit on.
+
+7. Small tweak: in `nofunc-map` and `nofunc-set`'s `stdlib` building blocks,
+   make the two-map/set comparison function (`compare_aux`) chain entirely in
+   `Ordering.t` instead of converting the key comparison to `int` at every
+   recursive step via `Ordering.to_int`. It matches on the key compare's
+   result with the normal `(Lt | Gt) as res -> res | Eq -> ...` chaining
+   pattern, converting to `int` only once, at the very end, to satisfy the
+   public `int`-returning `compare` signature.
+
+8. Diverge `nofunc-map` and `nofunc-set` from their `std` counterparts:
+   `OrderedType.compare` now must return `Ordering.t` directly instead of
+   `int` - these packages are for projects that work with `Ordering.t`
+   natively, not as a wrapper around `int`-returning comparators. Since the
+   record's `compare` field already matches the tree's `compare` type,
+   `Ord.compare` is stored and passed to the tree operations as-is, with no
+   wrapping closure needed - so `compare_int` is dropped entirely, along with
+   the extra allocation it required at every creation site
+   (`empty`/`singleton`/`of_list`/`of_seq`). `check_same_compare` now checks
+   physical equality directly on the single `compare` closure.
+
+9. Add `test/map`, `test/set`, `test/htbl`, `test/hset`: basic test suites for
+   the four `non-std` packages, mirroring the `std` suites' structure but
+   scoped to the wrapper's own code. Each wrapper shares its actual
+   tree/table implementation with its `std` counterpart, already exercised
+   thoroughly by the existing `stdmap`/`stdset`/`stdhtbl`/`stdhset` suites, so
+   these new suites only call every function of the thin wrapper itself, with
+   just enough cases to hit every wrapper-level branch (physical-equality
+   fast paths, the different-compare-functions error path for map/set). All
+   four wrapper files (`map0.ml`, `set0.ml`, `hashtbl0.ml`, `hashset0.ml`)
+   reach 100% line coverage, matching the `std` ones.
+
+10. Switch the `non-std` interfaces to a `t`-first style with labeled
+    closures: every function that operates on a container now takes it as
+    its first argument, and every closure passed to be called is labeled
+    `~f` (e.g. `val iter : 'a t -> f:('a -> unit) -> unit`). Functions
+    operating on bindings (a key and an associated value) label the two
+    `~key` and `~data` (e.g. `val add : ('a, 'b) t -> key:'a -> data:'b ->
+    ('a, 'b) t`): `nofunc-map`'s
+    `add`/`add_to_list`/`update`/`singleton`/`remove`/`find`/`find_opt`/`mem`/`split`/`to_seq_from`,
+    and `nofunc-htbl`'s
+    `add`/`find`/`find_opt`/`find_all`/`mem`/`remove`/`find_and_remove`/`replace`/`find_and_replace`.
+    `nofunc-set` and `nofunc-hset`'s single element argument stays
+    positional, matching Base's `Set.add : t -> 'a -> t` convention.
+
+    `Map.iter`/`Map.fold`'s own callback additionally labels its `~key`/
+    `~data` arguments, with the accumulator left last and unlabeled, to
+    avoid confusion with the accumulator's position - which varies across
+    fold conventions (mirroring Base's `Map.fold`:
+    `f:(key:'k -> data:'v -> 'acc -> 'acc)`, as opposed to `List.fold`'s
+    `f:('accum -> 'a -> 'accum)`). `Set.fold`'s callback labels its element
+    `~key` for the same reason.
