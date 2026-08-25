@@ -1,0 +1,7 @@
+(*_**********************************************************************************)
+(*_  nofunc-keyed: Keyed data structures adapted from OCaml Stdlib but no functors  *)
+(*_  SPDX-FileCopyrightText: 2025 Mathieu Barbin <mathieu.barbin@gmail.com>         *)
+(*_  SPDX-License-Identifier: LGPL-2.1-or-later WITH OCaml-LGPL-linking-exception   *)
+(*_**********************************************************************************)
+
+module Set = Set0
