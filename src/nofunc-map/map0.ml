@@ -7,26 +7,21 @@
 module type OrderedType = sig
   type t
 
-  val compare : t -> t -> int
+  val compare : t -> t -> Ordering.t
 end
 
 module Tree = Nofunc_map_stdlib.Map0
 
 type ('key, !+'a) t =
-  { compare_int : 'key -> 'key -> int
-  ; compare : 'key Tree.compare
+  { compare : 'key Tree.compare
   ; tree : ('key, 'a) Tree.t
   }
 
 let empty (type key) (module Ord : OrderedType with type t = key) =
-  let compare a b = Ordering.of_int (Ord.compare a b) in
-  { compare_int = Ord.compare; compare; tree = Tree.empty }
+  { compare = Ord.compare; tree = Tree.empty }
 ;;
 
-let with_tree t tree =
-  if t.tree == tree then t else { compare_int = t.compare_int; compare = t.compare; tree }
-;;
-
+let with_tree t tree = if t.tree == tree then t else { compare = t.compare; tree }
 let add key data t = with_tree t (Tree.add ~compare:t.compare key data t.tree)
 
 let add_to_list key data t =
@@ -36,23 +31,19 @@ let add_to_list key data t =
 let update key f t = with_tree t (Tree.update ~compare:t.compare key f t.tree)
 
 let singleton (type key) (module Ord : OrderedType with type t = key) key data =
-  let compare a b = Ordering.of_int (Ord.compare a b) in
-  { compare_int = Ord.compare; compare; tree = Tree.singleton key data }
+  { compare = Ord.compare; tree = Tree.singleton key data }
 ;;
 
 let remove key t = with_tree t (Tree.remove ~compare:t.compare key t.tree)
 
 let check_same_compare t1 t2 ~fct =
-  if not (t1.compare_int == t2.compare_int)
+  if not (t1.compare == t2.compare)
   then invalid_arg (Printf.sprintf "Map.%s: maps have different compare functions." fct)
 ;;
 
 let merge f t1 t2 =
   check_same_compare t1 t2 ~fct:"merge";
-  { compare_int = t1.compare_int
-  ; compare = t1.compare
-  ; tree = Tree.merge ~compare:t1.compare f t1.tree t2.tree
-  }
+  { compare = t1.compare; tree = Tree.merge ~compare:t1.compare f t1.tree t2.tree }
 ;;
 
 let union f t1 t2 =
@@ -62,7 +53,7 @@ let union f t1 t2 =
   then t1
   else if t2.tree == res
   then t2
-  else { compare_int = t1.compare_int; compare = t1.compare; tree = res }
+  else { compare = t1.compare; tree = res }
 ;;
 
 let cardinal t = Tree.cardinal t.tree
@@ -81,20 +72,10 @@ let find_last f t = Tree.find_last f t.tree
 let find_last_opt f t = Tree.find_last_opt f t.tree
 let iter f t = Tree.iter f t.tree
 let fold f t init = Tree.fold f t.tree init
-
-let map f t =
-  { compare_int = t.compare_int; compare = t.compare; tree = Tree.map f t.tree }
-;;
-
-let mapi f t =
-  { compare_int = t.compare_int; compare = t.compare; tree = Tree.mapi f t.tree }
-;;
-
+let map f t = { compare = t.compare; tree = Tree.map f t.tree }
+let mapi f t = { compare = t.compare; tree = Tree.mapi f t.tree }
 let filter f t = with_tree t (Tree.filter f t.tree)
-
-let filter_map f t =
-  { compare_int = t.compare_int; compare = t.compare; tree = Tree.filter_map f t.tree }
-;;
+let filter_map f t = { compare = t.compare; tree = Tree.filter_map f t.tree }
 
 let partition f t =
   let t_true, t_false = Tree.partition f t.tree in
@@ -125,8 +106,7 @@ let exists f t = Tree.exists f t.tree
 let to_list = bindings
 
 let of_list (type key) (module Ord : OrderedType with type t = key) bs =
-  let compare a b = Ordering.of_int (Ord.compare a b) in
-  { compare_int = Ord.compare; compare; tree = Tree.of_list ~compare bs }
+  { compare = Ord.compare; tree = Tree.of_list ~compare:Ord.compare bs }
 ;;
 
 let to_seq t = Tree.to_seq t.tree
@@ -135,6 +115,5 @@ let to_seq_from key t = Tree.to_seq_from ~compare:t.compare key t.tree
 let add_seq seq t = with_tree t (Tree.add_seq ~compare:t.compare seq t.tree)
 
 let of_seq (type key) (module Ord : OrderedType with type t = key) seq =
-  let compare a b = Ordering.of_int (Ord.compare a b) in
-  { compare_int = Ord.compare; compare; tree = Tree.of_seq ~compare seq }
+  { compare = Ord.compare; tree = Tree.of_seq ~compare:Ord.compare seq }
 ;;

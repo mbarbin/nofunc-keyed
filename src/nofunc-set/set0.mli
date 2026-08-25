@@ -18,7 +18,9 @@
     elements. Require [(module Ord)] as first-class module argument everywhere
     needed.
 
-  - Document which functions raise when operating on incompatible inputs. *)
+  - Document which functions raise when operating on incompatible inputs.
+
+  - Require [Ord.compare] to return [Ordering.t] instead of [int]. *)
 
 (**************************************************************************)
 (*                                                                        *)
@@ -52,8 +54,10 @@ module type OrderedType = sig
   (** The type of the set elements. *)
   type t
 
-  (** A total ordering function over the set elements. *)
-  val compare : t -> t -> int
+  (** A total ordering function over the set elements. An ordering function
+      derived from an existing [int]-returning comparator (for example,
+      [Stdlib.compare]) can be built with [Ordering.of_int]. *)
+  val compare : t -> t -> Ordering.t
 end
 
 (** {1:sets Sets} *)

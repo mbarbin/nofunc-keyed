@@ -18,7 +18,9 @@
     keys and data. Require [(module Ord)] as first-class module argument
     everywhere needed.
 
-  - Document which functions raise when operating on incompatible inputs. *)
+  - Document which functions raise when operating on incompatible inputs.
+
+  - Require [Ord.compare] to return [Ordering.t] instead of [int]. *)
 
 (**************************************************************************)
 (*                                                                        *)
@@ -53,12 +55,12 @@ module type OrderedType = sig
   type t
 
   (** A total ordering function over the keys. This is a two-argument function
-      [f] such that [f e1 e2] is zero if the keys [e1] and [e2] are equal,
-      [f e1 e2] is strictly negative if [e1] is smaller than [e2], and [f e1 e2]
-      is strictly positive if [e1] is greater than [e2]. Example: a suitable
-      ordering function is the generic structural comparison function
-      [Stdlib.compare]. *)
-  val compare : t -> t -> int
+      [f] such that [f e1 e2] is [Ordering.Eq] if the keys [e1] and [e2] are
+      equal, [f e1 e2] is [Ordering.Lt] if [e1] is smaller than [e2], and
+      [f e1 e2] is [Ordering.Gt] if [e1] is greater than [e2]. An ordering
+      function derived from an existing [int]-returning comparator (for
+      example, [Stdlib.compare]) can be built with [Ordering.of_int]. *)
+  val compare : t -> t -> Ordering.t
 end
 
 (** {1:maps Maps} *)
