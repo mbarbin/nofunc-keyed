@@ -89,9 +89,9 @@ val iter : 'a t -> f:('a -> unit) -> unit
     Other comments for {!iter} apply as well. *)
 val filter_inplace : 'a t -> f:('a -> bool) -> unit
 
-(** [fold set init ~f] computes [(f eN ... (f e1 init)...)], where [e1 ... eN]
+(** [fold set ~init ~f] computes [(f eN ... (f e1 init)...)], where [e1 ... eN]
     are the elements in [set]. Each element is presented exactly once to [f].
-    [key] is labeled to avoid mixing it up with the accumulator.
+    [elt] is labeled to avoid mixing it up with the accumulator.
 
     The order in which the elements are passed to [f] is unspecified.
 
@@ -102,11 +102,14 @@ val filter_inplace : 'a t -> f:('a -> bool) -> unit
 
     The behavior is not specified if the hash set is modified by [f] during
     the iteration. *)
-val fold : 'a t -> 'acc -> f:(key:'a -> 'acc -> 'acc) -> 'acc
+val fold : 'a t -> init:'acc -> f:(elt:'a -> 'acc -> 'acc) -> 'acc
 
 (** [length set] returns the number of bindings in [set]. It takes constant
     time. *)
 val length : _ t -> int
+
+(** [is_empty set] is [length set = 0]. *)
+val is_empty : _ t -> bool
 
 (** [stats tbl] returns statistics about the table [tbl]: number of buckets,
     size of the biggest bucket, distribution of buckets by size. *)
@@ -144,6 +147,11 @@ val create : (module Hashtbl.HashedType with type t = 'a) -> int -> 'a t
 
 (** Same as {!of_seq_seeded} but never randomized. *)
 val of_seq : (module Hashtbl.HashedType with type t = 'a) -> 'a Seq.t -> 'a t
+
+(** Build a set from the given elements. The elements are added in the same
+    order they appear in the list, using {!add}, which means that duplicated
+    elements are simply ignored (add is idempotent). *)
+val of_list : (module Hashtbl.HashedType with type t = 'a) -> 'a list -> 'a t
 
 (** {1:modular Modular explicit usage}
 

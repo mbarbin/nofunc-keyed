@@ -16,7 +16,10 @@
 
   - Remove the functors and module type signatures. Remove the generic and
   polymorphic versions. Keep only the former functorized interface but defunc,
-  that is require [equal] and [seeded_hash] everywhere needed. *)
+  that is require [equal] and [seeded_hash] everywhere needed.
+
+  - Add [remove_all], to remove every binding of a key at once, including any
+  shadowed by [add]. *)
 
 (*_*************************************************************************)
 (*_                                                                        *)
@@ -177,6 +180,13 @@ val find_and_remove :
   equal:'a equal -> seeded_hash:'a seeded_hash -> ('a, 'b) t -> 'a -> 'b option
 (** Same as {!remove} but returns the previous binding, if any.
     @since 5.5 *)
+
+val remove_all :
+  equal:'a equal -> seeded_hash:'a seeded_hash -> ('a, 'b) t -> 'a -> unit
+(** [Hashtbl.remove_all tbl x] removes every binding of [x] in [tbl] at once,
+    including any hidden by {!add}. Does nothing if [x] is not bound in [tbl].
+    Unlike calling {!remove} repeatedly, this hashes [x] only once and walks the
+    bucket it lands in a single pass. Not part of the upstream OCaml Stdlib. *)
 
 val replace :
   equal:'a equal -> seeded_hash:'a seeded_hash -> ('a, 'b) t -> 'a -> 'b -> unit

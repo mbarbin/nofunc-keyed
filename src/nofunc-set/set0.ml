@@ -75,7 +75,7 @@ let find_first_opt t ~f = Tree.find_first_opt f t.tree
 let find_last t ~f = Tree.find_last f t.tree
 let find_last_opt t ~f = Tree.find_last_opt f t.tree
 let iter t ~f = Tree.iter f t.tree
-let fold t init ~f = Tree.fold (fun key acc -> f ~key acc) t.tree init
+let fold t ~init ~f = Tree.fold (fun elt acc -> f ~elt acc) t.tree init
 let map t ~f = with_tree t (Tree.map ~compare:t.compare f t.tree)
 let filter t ~f = with_tree t (Tree.filter f t.tree)
 let filter_map t ~f = with_tree t (Tree.filter_map ~compare:t.compare f t.tree)
@@ -101,7 +101,7 @@ let equal t1 t2 =
 
 let compare t1 t2 =
   check_same_compare t1 t2 ~fct:"compare";
-  Tree.compare ~compare:t1.compare t1.tree t2.tree
+  Ordering.of_int (Tree.compare ~compare:t1.compare t1.tree t2.tree)
 ;;
 
 let subset t1 t2 =

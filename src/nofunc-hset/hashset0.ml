@@ -11,9 +11,9 @@ type !'a t = ('a, unit) Hashtbl.t
 let clear = Hashtbl.clear
 let reset = Hashtbl.reset
 let copy = Hashtbl.copy
-let add t key = Hashtbl.replace t ~key ~data:()
-let mem t key = Hashtbl.mem t key
-let remove t key = Hashtbl.remove t key
+let add t key = Hashtbl.set t ~key ~data:()
+let mem = Hashtbl.mem
+let remove = Hashtbl.remove
 let iter t ~f = Hashtbl.iter t ~f:(fun ~key ~data:() -> f key)
 let some_unit = Some ()
 
@@ -21,8 +21,9 @@ let filter_inplace t ~f =
   Hashtbl.filter_map_inplace t ~f:(fun ~key ~data:() -> if f key then some_unit else None)
 ;;
 
-let fold t init ~f = Hashtbl.fold t init ~f:(fun ~key ~data:() acc -> f ~key acc)
+let fold t ~init ~f = Hashtbl.fold t ~init ~f:(fun ~key:elt ~data:() acc -> f ~elt acc)
 let length = Hashtbl.length
+let is_empty = Hashtbl.is_empty
 let stats = Hashtbl.stats
 let to_seq = Hashtbl.to_seq_keys
 let add_seq t seq = Seq.iter (fun key -> add t key) seq
@@ -38,6 +39,12 @@ let of_seq_seeded mkey ?random seq =
 let of_seq mkey seq =
   let t = create mkey 16 in
   Seq.iter (fun key -> add t key) seq;
+  t
+;;
+
+let of_list mkey l =
+  let t = create mkey (List.length l) in
+  List.iter (fun key -> add t key) l;
   t
 ;;
 

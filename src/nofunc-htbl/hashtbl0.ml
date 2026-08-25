@@ -18,9 +18,9 @@ type (!'key, !'data) t =
 let clear t = Tbl.clear t.tbl
 let reset t = Tbl.reset t.tbl
 let copy t = { equal = t.equal; seeded_hash = t.seeded_hash; tbl = Tbl.copy t.tbl }
-let add t ~key ~data = Tbl.add ~seeded_hash:t.seeded_hash t.tbl key data
-let find t key = Tbl.find ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
-let find_opt t key = Tbl.find_opt ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
+let shadow t ~key ~data = Tbl.add ~seeded_hash:t.seeded_hash t.tbl key data
+let find t key = Tbl.find_opt ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
+let find_exn t key = Tbl.find ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
 let find_all t key = Tbl.find_all ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
 let mem t key = Tbl.mem ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
 let remove t key = Tbl.remove ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
@@ -29,7 +29,9 @@ let find_and_remove t key =
   Tbl.find_and_remove ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
 ;;
 
-let replace t ~key ~data =
+let remove_all t key = Tbl.remove_all ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
+
+let set t ~key ~data =
   Tbl.replace ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key data
 ;;
 
@@ -39,17 +41,15 @@ let find_and_replace t ~key ~data =
 
 let iter t ~f = Tbl.iter (fun key data -> f ~key ~data) t.tbl
 let filter_map_inplace t ~f = Tbl.filter_map_inplace (fun key data -> f ~key ~data) t.tbl
-let fold t init ~f = Tbl.fold (fun key data acc -> f ~key ~data acc) t.tbl init
+let fold t ~init ~f = Tbl.fold (fun key data acc -> f ~key ~data acc) t.tbl init
 let length t = Tbl.length t.tbl
+let is_empty t = length t = 0
 let stats t = Tbl.stats t.tbl
 let to_seq t = Tbl.to_seq t.tbl
 let to_seq_keys t = Tbl.to_seq_keys t.tbl
 let to_seq_values t = Tbl.to_seq_values t.tbl
-let add_seq t seq = Tbl.add_seq ~seeded_hash:t.seeded_hash t.tbl seq
-
-let replace_seq t seq =
-  Tbl.replace_seq ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl seq
-;;
+let shadow_seq t seq = Tbl.add_seq ~seeded_hash:t.seeded_hash t.tbl seq
+let set_seq t seq = Tbl.replace_seq ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl seq
 
 let create (type key) (module Key : HashedType with type t = key) len =
   let seeded_hash _ t = Key.hash t in
@@ -111,3 +111,8 @@ let dyn_of_m__t (type key) (module T : Dynable with type t = key) data_to_dyn t 
      |> List.sort (fun (key1, _) (key2, _) -> Ordering.to_int (T.compare key1 key2))
      |> List.map (fun (key, data) -> T.to_dyn key, data_to_dyn data))
 ;;
+
+let replace = set
+let replace_seq = set_seq
+let add = shadow
+let add_seq = shadow_seq

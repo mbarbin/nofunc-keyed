@@ -77,14 +77,14 @@ let max_binding t = Tree.max_binding t.tree
 let max_binding_opt t = Tree.max_binding_opt t.tree
 let choose t = Tree.choose t.tree
 let choose_opt t = Tree.choose_opt t.tree
-let find t key = Tree.find ~compare:t.compare key t.tree
-let find_opt t key = Tree.find_opt ~compare:t.compare key t.tree
+let find t key = Tree.find_opt ~compare:t.compare key t.tree
+let find_exn t key = Tree.find ~compare:t.compare key t.tree
 let find_first t ~f = Tree.find_first f t.tree
 let find_first_opt t ~f = Tree.find_first_opt f t.tree
 let find_last t ~f = Tree.find_last f t.tree
 let find_last_opt t ~f = Tree.find_last_opt f t.tree
 let iter t ~f = Tree.iter (fun key data -> f ~key ~data) t.tree
-let fold t init ~f = Tree.fold (fun key data acc -> f ~key ~data acc) t.tree init
+let fold t ~init ~f = Tree.fold (fun key data acc -> f ~key ~data acc) t.tree init
 let map t ~f = { compare = t.compare; tree = Tree.map f t.tree }
 
 let mapi t ~f =
@@ -111,14 +111,19 @@ let is_empty t = Tree.is_empty t.tree
 let is_singleton t = Tree.is_singleton t.tree
 let mem t key = Tree.mem ~compare:t.compare key t.tree
 
-let equal t1 t2 ~f =
+let equal f t1 t2 =
   check_same_compare t1 t2 ~fct:"equal";
-  Tree.equal ~compare:t1.compare (fun left right -> f ~left ~right) t1.tree t2.tree
+  Tree.equal ~compare:t1.compare f t1.tree t2.tree
 ;;
 
-let compare t1 t2 ~f =
+let compare f t1 t2 =
   check_same_compare t1 t2 ~fct:"compare";
-  Tree.compare ~compare:t1.compare (fun left right -> f ~left ~right) t1.tree t2.tree
+  Ordering.of_int
+    (Tree.compare
+       ~compare:t1.compare
+       (fun left right -> Ordering.to_int (f left right))
+       t1.tree
+       t2.tree)
 ;;
 
 let for_all t ~f = Tree.for_all (fun key data -> f ~key ~data) t.tree

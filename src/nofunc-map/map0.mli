@@ -84,12 +84,12 @@ val empty : (module OrderedType with type t = 'key) -> ('key, 'a) t
 val add : ('key, 'a) t -> key:'key -> data:'a -> ('key, 'a) t
 
 (** [add_to_list m ~key ~data] is [m] with [key] mapped to [l] such that [l] is
-    [data :: find m ~key] if [key] was bound in [m] and [[data]] otherwise. *)
+    [data :: find_exn m ~key] if [key] was bound in [m] and [[data]] otherwise. *)
 val add_to_list : ('key, 'a list) t -> key:'key -> data:'a -> ('key, 'a list) t
 
 (** [update m key ~f] returns a map containing the same bindings as [m], except
     for the binding of [key]. Depending on the value of [y] where [y] is
-    [f (find_opt m key)], the binding of [key] is added, removed or updated. If
+    [f (find m key)], the binding of [key] is added, removed or updated. If
     [y] is [None], the binding is removed if it exists; otherwise, if [y] is
     [Some z] then [key] is associated to [z] in the resulting map. If [key] was
     already bound in [m] to a value that is physically equal to [z], [m] is
@@ -113,9 +113,9 @@ val remove : ('key, 'a) t -> 'key -> ('key, 'a) t
 
 (** [merge m1 m2 ~f] computes a map whose keys are a subset of the keys of [m1]
     and of [m2]. The presence of each such binding, and the corresponding value,
-    is determined with the function [f]. In terms of the [find_opt] operation,
+    is determined with the function [f]. In terms of the [find] operation,
     we have
-    [find_opt (merge m1 m2 ~f) key = f ~key ~left:(find_opt m1 key) ~right:(find_opt m2 key)]
+    [find (merge m1 m2 ~f) key = f ~key ~left:(find m1 key) ~right:(find m2 key)]
     for any key [key], provided that [f ~key ~left:None ~right:None = None].
     [left] and [right] are labeled to avoid mixing up which map each value
     comes from. Raise [Invalid_argument] if the maps have different compare
@@ -180,13 +180,13 @@ val choose_opt : ('key, 'a) t -> ('key * 'a) option
 
 (** {1:searching Searching} *)
 
-(** [find m key] returns the current value of [key] in [m], or raises
-    [Not_found] if no binding for [key] exists. *)
-val find : ('key, 'a) t -> 'key -> 'a
-
-(** [find_opt m key] returns [Some v] if the current value of [key] in [m] is
+(** [find m key] returns [Some v] if the current value of [key] in [m] is
     [v], or [None] if no binding for [key] exists. *)
-val find_opt : ('key, 'a) t -> 'key -> 'a option
+val find : ('key, 'a) t -> 'key -> 'a option
+
+(** [find_exn m key] returns the current value of [key] in [m], or raises
+    [Not_found] if no binding for [key] exists. *)
+val find_exn : ('key, 'a) t -> 'key -> 'a
 
 (** [find_first m ~f], where [f] is a monotonically increasing function, returns
     the binding of [m] with the lowest key [k] such that [f k], or raises
@@ -220,11 +220,11 @@ val find_last_opt : ('key, 'a) t -> f:('key -> bool) -> ('key * 'a) option
     increasing order with respect to the ordering over the type of the keys. *)
 val iter : ('key, 'a) t -> f:(key:'key -> data:'a -> unit) -> unit
 
-(** [fold m init ~f] computes [(f kN dN ... (f k1 d1 init)...)], where
+(** [fold m ~init ~f] computes [(f kN dN ... (f k1 d1 init)...)], where
     [k1 ... kN] are the keys of all bindings in [m] (in increasing order), and
     [d1 ... dN] are the associated data. [key] and [data] are labeled to avoid
     mixing them up with the accumulator. *)
-val fold : ('key, 'a) t -> 'acc -> f:(key:'key -> data:'a -> 'acc -> 'acc) -> 'acc
+val fold : ('key, 'a) t -> init:'acc -> f:(key:'key -> data:'a -> 'acc -> 'acc) -> 'acc
 
 (** {1:transforming Transforming} *)
 
@@ -291,20 +291,17 @@ val is_singleton : _ t -> bool
     otherwise. *)
 val mem : ('key, _) t -> 'key -> bool
 
-(** [equal m1 m2 ~f] tests whether the maps [m1] and [m2] are equal, that is,
-    contain equal keys and associate them with equal data. [f] is the equality
-    predicate used to compare the data associated with the keys. [left] and
-    [right] are labeled to avoid mixing up which map each value comes from,
-    especially since both have the same type. Raise [Invalid_argument] if the
-    maps have different compare functions. *)
-val equal : ('key, 'a) t -> ('key, 'a) t -> f:(left:'a -> right:'a -> bool) -> bool
+(** [equal cmp m1 m2] tests whether the maps [m1] and [m2] are equal, that is,
+    contain equal keys and associate them with equal data. [cmp] is the
+    equality predicate used to compare the data associated with the keys.
+    Raise [Invalid_argument] if the maps have different compare functions. *)
+val equal : ('a -> 'a -> bool) -> ('key, 'a) t -> ('key, 'a) t -> bool
 
-(** Total ordering between maps. [f] is a total ordering used to compare data
-    associated with equal keys in the two maps. [left] and [right] are labeled
-    to avoid mixing up which map each value comes from, especially since both
-    have the same type. Raise [Invalid_argument] if the maps have different
-    compare functions. *)
-val compare : ('key, 'a) t -> ('key, 'a) t -> f:(left:'a -> right:'a -> int) -> int
+(** [compare cmp m1 m2] is a total ordering between maps. [cmp] is a total
+    ordering used to compare data associated with equal keys in the two
+    maps. Raise [Invalid_argument] if the maps have different compare
+    functions. *)
+val compare : ('a -> 'a -> Ordering.t) -> ('key, 'a) t -> ('key, 'a) t -> Ordering.t
 
 (** [for_all m ~f] checks if all the bindings of the map satisfy the predicate
     [f]. [key] and [data] are labeled to avoid mixing them up. *)

@@ -11,19 +11,23 @@
 module Hashset = Nofunc_hset.Hashset
 
 let sorted_elements set =
-  Hashset.fold set [] ~f:(fun ~key acc -> key :: acc) |> List.sort Int.compare
+  Hashset.fold set ~init:[] ~f:(fun ~elt acc -> elt :: acc) |> List.sort Int.compare
 ;;
 
 let print_elements set = print_dyn (sorted_elements set |> Dyn.list Dyn.int)
 
-let%expect_test "create / add / mem / remove / length" =
+let%expect_test "create / add / mem / remove / length / is_empty" =
   let set = Hashset.create (module Int) 16 in
+  print_dyn (Hashset.is_empty set |> Dyn.bool);
+  [%expect {| true |}];
   Hashset.add set 1;
   Hashset.add set 2;
   (* [add] is idempotent. *)
   Hashset.add set 2;
   print_dyn (Hashset.length set |> Dyn.int);
   [%expect {| 2 |}];
+  print_dyn (Hashset.is_empty set |> Dyn.bool);
+  [%expect {| false |}];
   print_dyn (Hashset.mem set 2 |> Dyn.bool);
   [%expect {| true |}];
   Hashset.remove set 2;
@@ -41,7 +45,7 @@ let%expect_test "iter / fold / filter_inplace" =
   Hashset.iter set ~f:(fun _ -> incr count);
   print_dyn (!count |> Dyn.int);
   [%expect {| 3 |}];
-  let sum = Hashset.fold set 0 ~f:(fun ~key acc -> acc + key) in
+  let sum = Hashset.fold set ~init:0 ~f:(fun ~elt acc -> acc + elt) in
   print_dyn (sum |> Dyn.int);
   [%expect {| 6 |}];
   (* Exercise both outcomes of the filtering predicate. *)
@@ -69,7 +73,7 @@ let%expect_test "clear / reset / copy" =
   ()
 ;;
 
-let%expect_test "stats / to_seq / add_seq / of_seq" =
+let%expect_test "stats / to_seq / add_seq / of_seq / of_list" =
   let set = Hashset.create (module Int) 16 in
   Hashset.add_seq set (List.to_seq [ 1; 2; 2; 3 ]);
   let stats = Hashset.stats set in
@@ -80,6 +84,9 @@ let%expect_test "stats / to_seq / add_seq / of_seq" =
   let set2 = Hashset.of_seq (module Int) (List.to_seq [ 4; 5 ]) in
   print_elements set2;
   [%expect {| [ 4; 5 ] |}];
+  let set3 = Hashset.of_list (module Int) [ 6; 7; 7 ] in
+  print_elements set3;
+  [%expect {| [ 6; 7 ] |}];
   ()
 ;;
 

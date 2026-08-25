@@ -51,7 +51,7 @@ let%expect_test "add / update / remove" =
   require (phys_equal m1 m2);
   [%expect {||}];
   let m = Map.update m 1 ~f:(fun v -> Option.map String.uppercase_ascii v) in
-  print_binding (1, Map.find m 1);
+  print_binding (1, Map.find_exn m 1);
   [%expect {| (1, "ONE") |}];
   let m = Map.remove m 2 in
   print_dyn (Map.mem m 2 |> Dyn.bool);
@@ -63,12 +63,12 @@ let%expect_test "add_to_list" =
   let m = Map.empty (module Int) in
   let m = Map.add_to_list m ~key:3 ~data:"a" in
   let m = Map.add_to_list m ~key:3 ~data:"b" in
-  print_dyn (Map.find m 3 |> Dyn.list Dyn.string);
+  print_dyn (Map.find_exn m 3 |> Dyn.list Dyn.string);
   [%expect {| [ "b"; "a" ] |}];
   ()
 ;;
 
-let%expect_test "of_list / mem / find / find_opt" =
+let%expect_test "of_list / mem / find / find_exn" =
   let m = Map.of_list (module Int) [ 3, "three"; 1, "one"; 2, "two"; 1, "ONE" ] in
   print_bindings m;
   [%expect {| [ (1, "ONE"); (2, "two"); (3, "three") ] |}];
@@ -76,11 +76,11 @@ let%expect_test "of_list / mem / find / find_opt" =
   [%expect {| true |}];
   print_dyn (Map.mem m 4 |> Dyn.bool);
   [%expect {| false |}];
-  print_dyn (Map.find m 2 |> Dyn.string);
+  print_dyn (Map.find_exn m 2 |> Dyn.string);
   [%expect {| "two" |}];
-  require_does_raise (fun () -> Map.find m 4);
+  require_does_raise (fun () -> Map.find_exn m 4);
   [%expect {| Not_found |}];
-  print_dyn (Map.find_opt m 4 |> Dyn.option Dyn.string);
+  print_dyn (Map.find m 4 |> Dyn.option Dyn.string);
   [%expect {| None |}];
   ()
 ;;
@@ -124,7 +124,7 @@ let%expect_test "iter / fold / for_all / exists" =
   Map.iter m ~f:(fun ~key:_ ~data:_ -> incr count);
   print_dyn (!count |> Dyn.int);
   [%expect {| 2 |}];
-  let sum = Map.fold m 0 ~f:(fun ~key ~data:_ acc -> acc + key) in
+  let sum = Map.fold m ~init:0 ~f:(fun ~key ~data:_ acc -> acc + key) in
   print_dyn (sum |> Dyn.int);
   [%expect {| 3 |}];
   print_dyn (Map.for_all m ~f:(fun ~key ~data:_ -> key > 0) |> Dyn.bool);
@@ -210,13 +210,15 @@ let%expect_test "equal / compare" =
   let m1 = Map.of_list (module Int) [ 1, "one"; 2, "two" ] in
   let m2 = Map.of_list (module Int) [ 1, "one"; 2, "two" ] in
   let m3 = Map.of_list (module Int) [ 1, "one"; 2, "TWO" ] in
-  print_dyn (Map.equal m1 m2 ~f:(fun ~left ~right -> String.equal left right) |> Dyn.bool);
+  print_dyn (Map.equal String.equal m1 m2 |> Dyn.bool);
   [%expect {| true |}];
-  print_dyn (Map.equal m1 m3 ~f:(fun ~left ~right -> String.equal left right) |> Dyn.bool);
+  print_dyn (Map.equal String.equal m1 m3 |> Dyn.bool);
   [%expect {| false |}];
   print_dyn
-    (Map.compare m1 m2 ~f:(fun ~left ~right -> String.compare left right) |> Dyn.int);
-  [%expect {| 0 |}];
+    (Map.compare (fun left right -> Ordering.of_int (String.compare left right)) m1 m2
+     |> Ordering.to_string
+     |> Dyn.string);
+  [%expect {| "=" |}];
   ()
 ;;
 

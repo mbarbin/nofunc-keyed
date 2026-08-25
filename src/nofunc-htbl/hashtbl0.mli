@@ -45,7 +45,7 @@
     Hash tables are hashed association tables, with in-place modification.
     Because most operations on a hash table modify their input, they're more
     commonly used in imperative code. The lookup of the value associated with a
-    key (see {!find}, {!find_opt}) is normally very fast, often faster than the
+    key (see {!find}, {!find_exn}) is normally very fast, often faster than the
     equivalent lookup in [Map].
 
     {b Warning} a hash table is only as good as the hash function. A bad hash
@@ -82,25 +82,27 @@ val reset : ('a, 'b) t -> unit
 (** Return a copy of the given hashtable. *)
 val copy : ('a, 'b) t -> ('a, 'b) t
 
-(** [add tbl ~key ~data] adds a binding of [key] to [data]
-    in table [tbl].
+(** [shadow tbl ~key ~data] adds a binding of [key] to [data] in table
+    [tbl], on top of any binding [key] may already have, rather than
+    replacing it.
 
     {b Warning}: Previous bindings for [key] are not removed, but simply
     hidden. That is, after performing {!remove}[ tbl key],
     the previous binding for [key], if any, is restored.
     (Same behavior as with association lists.)
 
-    If you desire the classic behavior of replacing elements,
-    see {!replace}. *)
-val add : ('a, 'b) t -> key:'a -> data:'b -> unit
+    This is a rare thing to want: most callers who mean to bind [key] to
+    [data], regardless of what [key] was bound to before, should reach for
+    {!set} instead. *)
+val shadow : ('a, 'b) t -> key:'a -> data:'b -> unit
 
-(** [find tbl key] returns the current binding of [key] in [tbl], or raises
-    [Not_found] if no such binding exists. *)
-val find : ('a, 'b) t -> 'a -> 'b
-
-(** [find_opt tbl key] returns the current binding of [key] in [tbl], or [None]
+(** [find tbl key] returns the current binding of [key] in [tbl], or [None]
     if no such binding exists. *)
-val find_opt : ('a, 'b) t -> 'a -> 'b option
+val find : ('a, 'b) t -> 'a -> 'b option
+
+(** [find_exn tbl key] returns the current binding of [key] in [tbl], or raises
+    [Not_found] if no such binding exists. *)
+val find_exn : ('a, 'b) t -> 'a -> 'b
 
 (** [find_all tbl key] returns the list of all data associated with [key] in
     [tbl]. The current binding is returned first, then the previous bindings, in
@@ -111,22 +113,31 @@ val find_all : ('a, 'b) t -> 'a -> 'b list
 val mem : ('a, 'b) t -> 'a -> bool
 
 (** [remove tbl key] removes the current binding of [key] in [tbl], restoring
-    the previous binding if it exists. It does nothing if [key] is not bound in
-    [tbl]. *)
+    the previous binding if it exists (see {!shadow}). It does nothing if
+    [key] is not bound in [tbl]. If [key] was only ever bound via {!set}
+    (never {!shadow}), it has at most one binding and this clears it
+    entirely; otherwise, see {!remove_all} to clear every binding of [key]
+    at once. *)
 val remove : ('a, 'b) t -> 'a -> unit
 
 (** Same as {!remove} but returns the previous binding, if any. *)
 val find_and_remove : ('a, 'b) t -> 'a -> 'b option
 
-(** [replace tbl ~key ~data] replaces the current binding of [key] in [tbl] by a
+(** [remove_all tbl key] removes every binding of [key] in [tbl], including
+    any shadowed by {!shadow}, so that {!mem}[ tbl key] is [false] afterwards.
+    Same as calling {!remove} repeatedly until [key] is no longer bound. Does
+    nothing if [key] is not bound in [tbl]. *)
+val remove_all : ('a, 'b) t -> 'a -> unit
+
+(** [set tbl ~key ~data] replaces the current binding of [key] in [tbl] by a
     binding of [key] to [data]. If [key] is unbound in [tbl], a binding of [key]
     to [data] is added to [tbl].
 
     This is functionally equivalent to {!remove}[ tbl key] followed by
-    {!add}[ tbl ~key ~data]. *)
-val replace : ('a, 'b) t -> key:'a -> data:'b -> unit
+    {!shadow}[ tbl ~key ~data]. *)
+val set : ('a, 'b) t -> key:'a -> data:'b -> unit
 
-(** Same as {!replace} but returns the previous binding, if any. *)
+(** Same as {!set} but returns the previous binding, if any. *)
 val find_and_replace : ('a, 'b) t -> key:'a -> data:'b -> 'b option
 
 (** [iter tbl ~f] applies [f] to all bindings in table [tbl]. [key] and [data]
@@ -156,7 +167,7 @@ val iter : ('a, 'b) t -> f:(key:'a -> data:'b -> unit) -> unit
     Other comments for {!iter} apply as well. *)
 val filter_map_inplace : ('a, 'b) t -> f:(key:'a -> data:'b -> 'b option) -> unit
 
-(** [fold tbl init ~f] computes [(f kN dN ... (f k1 d1 init)...)], where
+(** [fold tbl ~init ~f] computes [(f kN dN ... (f k1 d1 init)...)], where
     [k1 ... kN] are the keys of all bindings in [tbl], and [d1 ... dN] are the
     associated values. Each binding is presented exactly once to [f]. [key] and
     [data] are labeled to avoid mixing them up with the accumulator.
@@ -173,12 +184,15 @@ val filter_map_inplace : ('a, 'b) t -> f:(key:'a -> data:'b -> 'b option) -> uni
 
     The behavior is not specified if the hash table is modified by [f] during
     the iteration. *)
-val fold : ('a, 'b) t -> 'acc -> f:(key:'a -> data:'b -> 'acc -> 'acc) -> 'acc
+val fold : ('a, 'b) t -> init:'acc -> f:(key:'a -> data:'b -> 'acc -> 'acc) -> 'acc
 
 (** [length tbl] returns the number of bindings in [tbl]. It takes constant
     time. Multiple bindings are counted once each, so [length] gives the number
     of times [iter] calls its first argument. *)
 val length : ('a, 'b) t -> int
+
+(** [is_empty tbl] is [length tbl = 0]. *)
+val is_empty : ('a, 'b) t -> bool
 
 (** [stats tbl] returns statistics about the table [tbl]: number of buckets,
     size of the biggest bucket, distribution of buckets by size. *)
@@ -199,11 +213,11 @@ val to_seq_keys : ('a, _) t -> 'a Seq.t
 (** Same as [Seq.map snd (to_seq m)]. *)
 val to_seq_values : (_, 'b) t -> 'b Seq.t
 
-(** Add the given bindings to the table, using {!add}. *)
-val add_seq : ('a, 'b) t -> ('a * 'b) Seq.t -> unit
+(** Add the given bindings to the table, using {!shadow}. *)
+val shadow_seq : ('a, 'b) t -> ('a * 'b) Seq.t -> unit
 
-(** Add the given bindings to the table, using {!replace}. *)
-val replace_seq : ('a, 'b) t -> ('a * 'b) Seq.t -> unit
+(** Add the given bindings to the table, using {!set}. *)
+val set_seq : ('a, 'b) t -> ('a * 'b) Seq.t -> unit
 
 (** [create_seeded (module Key) n] creates a new, empty hash table, with initial
     size greater or equal to the suggested size [n]. For best results, [n]
@@ -312,3 +326,35 @@ val dyn_of_m__t
   -> ('data -> Dyn.t)
   -> ('key, 'data) t
   -> Dyn.t
+
+(** {1 Deprecated}
+
+    The following is deprecated. Please migrate, and do not use in new code. *)
+
+(** This was renamed [set]. Hint: Run [ocamlmig migrate]. *)
+val replace : ('a, 'b) t -> key:'a -> data:'b -> unit
+[@@ocaml.deprecated "[since 2026-08] Use [Hashtbl.set]. Hint: Run [ocamlmig migrate]"]
+[@@migrate { repl = Rel.set }]
+
+(** This was renamed [set_seq]. Hint: Run [ocamlmig migrate]. *)
+val replace_seq : ('a, 'b) t -> ('a * 'b) Seq.t -> unit
+[@@ocaml.deprecated "[since 2026-08] Use [Hashtbl.set_seq]. Hint: Run [ocamlmig migrate]"]
+[@@migrate { repl = Rel.set_seq }]
+
+(** This was renamed [shadow]: [add] is a rare operation to reach for (it
+    shadows rather than replaces an existing binding), and the new name is
+    chosen to be less inviting - most callers want {!set}. Hint: Run
+    [ocamlmig migrate] to keep the exact same [add] behavior under its new
+    name. *)
+val add : ('a, 'b) t -> key:'a -> data:'b -> unit
+[@@ocaml.deprecated
+  "[since 2026-08] Renamed to [Hashtbl.shadow] (most callers want [Hashtbl.set] \
+   instead). Hint: Run [ocamlmig migrate]"]
+[@@migrate { repl = Rel.shadow }]
+
+(** This was renamed [shadow_seq], for the same reason as {!shadow}. Hint:
+    Run [ocamlmig migrate]. *)
+val add_seq : ('a, 'b) t -> ('a * 'b) Seq.t -> unit
+[@@ocaml.deprecated
+  "[since 2026-08] Renamed to [Hashtbl.shadow_seq]. Hint: Run [ocamlmig migrate]"]
+[@@migrate { repl = Rel.shadow_seq }]

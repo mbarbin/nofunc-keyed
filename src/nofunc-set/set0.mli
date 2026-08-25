@@ -180,10 +180,10 @@ val find_last_opt : 'elt t -> f:('elt -> bool) -> 'elt option
     the type of the elements. *)
 val iter : 'elt t -> f:('elt -> unit) -> unit
 
-(** [fold s init ~f] computes [(f xN ... (f x2 (f x1 init))...)], where
-    [x1 ... xN] are the elements of [s], in increasing order. [key] is labeled
+(** [fold s ~init ~f] computes [(f xN ... (f x2 (f x1 init))...)], where
+    [x1 ... xN] are the elements of [s], in increasing order. [elt] is labeled
     to avoid mixing it up with the accumulator. *)
-val fold : 'elt t -> 'acc -> f:(key:'elt -> 'acc -> 'acc) -> 'acc
+val fold : 'elt t -> init:'acc -> f:(elt:'elt -> 'acc -> 'acc) -> 'acc
 
 (** {1:transforming Transforming} *)
 
@@ -248,7 +248,7 @@ val equal : 'elt t -> 'elt t -> bool
 (** Total ordering between sets. Can be used as the ordering function for doing
     sets of sets. Raise [Invalid_argument] if the sets have different compare
     functions. *)
-val compare : 'elt t -> 'elt t -> int
+val compare : 'elt t -> 'elt t -> Ordering.t
 
 (** [subset s1 s2] tests whether the set [s1] is a subset of the set [s2]. Raise
     [Invalid_argument] if the sets have different compare functions. *)

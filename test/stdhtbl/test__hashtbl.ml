@@ -22,6 +22,16 @@ let%expect_test "create / length" =
   ()
 ;;
 
+let%expect_test "create rounds the requested size up to the next power of 2" =
+  (* [power_2_above] doubles from 16 until it reaches or exceeds the
+     requested size; 127 isn't itself a power of 2, so this also exercises
+     its recursive case (16 -> 32 -> 64 -> 128), not just its base case. *)
+  let tbl = Hashtbl.create (module Int) 127 in
+  print_dyn ((Hashtbl.stats tbl).num_buckets |> Dyn.int);
+  [%expect {| 128 |}];
+  ()
+;;
+
 let%expect_test "add / find / find_opt / mem" =
   let tbl = Hashtbl.create (module Int) 16 in
   Hashtbl.add tbl 1 "one";
@@ -295,6 +305,21 @@ let%expect_test "create_seeded" =
   ()
 ;;
 
+let%expect_test "create_seeded ~random" =
+  (* Passing [~random] explicitly, rather than omitting it (which defaults
+     to [Stdlib.Hashtbl.is_randomized ()]), exercises the [Some _] branch of
+     [create]'s internal [?random] match, in both directions. *)
+  let tbl_random = Hashtbl.create_seeded (module Int) ~random:true 16 in
+  Hashtbl.replace tbl_random 1 "one";
+  print_dyn (Hashtbl.find tbl_random 1 |> Dyn.string);
+  [%expect {| "one" |}];
+  let tbl_not_random = Hashtbl.create_seeded (module Int) ~random:false 16 in
+  Hashtbl.replace tbl_not_random 1 "one";
+  print_dyn (Hashtbl.find tbl_not_random 1 |> Dyn.string);
+  [%expect {| "one" |}];
+  ()
+;;
+
 let%expect_test "of_seq_seeded" =
   let tbl =
     Hashtbl.of_seq_seeded (module Int) (List.to_seq [ 1, "one"; 2, "two"; 1, "ONE" ])
@@ -471,6 +496,38 @@ let%expect_test "resize via add" =
   [%expect {| 100 |}];
   print_dyn (Hashtbl.find tbl 50 |> Dyn.string);
   [%expect {| "50" |}];
+  ()
+;;
+
+let%expect_test
+    "resize from inside an iter callback exercises the ongoing_traversal guard"
+  =
+  let tbl = Hashtbl.create (module Int) 16 in
+  Hashtbl.replace tbl 0 "zero";
+  print_dyn ((Hashtbl.stats tbl).num_buckets |> Dyn.int);
+  [%expect {| 16 |}];
+  (* Growing the table well past its resize threshold from inside the very
+     [iter] call that's walking it forces [resize] to run while a traversal
+     is ongoing - exercising the path that copies bindings into fresh cells
+     instead of reusing (and mutating) the ones this [iter] call is
+     currently holding references into. *)
+  Hashtbl.iter
+    (fun _k _v ->
+       for i = 1 to 99 do
+         Hashtbl.replace tbl i (string_of_int i)
+       done)
+    tbl;
+  print_dyn (Hashtbl.length tbl |> Dyn.int);
+  [%expect {| 100 |}];
+  (* The table is fully consistent afterward: every element, old and new,
+     is present, and the bucket array reflects the resize(s) that happened
+     during that single callback invocation. *)
+  for i = 0 to 99 do
+    require (Hashtbl.mem tbl i)
+  done;
+  [%expect {||}];
+  print_dyn ((Hashtbl.stats tbl).num_buckets |> Dyn.int);
+  [%expect {| 64 |}];
   ()
 ;;
 

@@ -55,8 +55,8 @@ type t =
 let%expect_test "record with a field for each of Map / Set / Hashtbl / Hashset's M(Key).t"
   =
   let populations_htbl = Hashtbl.create (module String_key) 16 in
-  Hashtbl.replace populations_htbl ~key:"b" ~data:2;
-  Hashtbl.replace populations_htbl ~key:"a" ~data:1;
+  Hashtbl.set populations_htbl ~key:"b" ~data:2;
+  Hashtbl.set populations_htbl ~key:"a" ~data:1;
   let ids_hset = Hashset.create (module Int_key) 16 in
   Hashset.add ids_hset 3;
   Hashset.add ids_hset 1;
@@ -89,8 +89,8 @@ let%expect_test "[%sexp_of: _ Map.M(Key).t] / [%sexp_of: Set.M(Key).t]" =
 
 let%expect_test "[%sexp_of: _ Hashtbl.M(Key).t] / [%sexp_of: Hashset.M(Key).t]" =
   let tbl = Hashtbl.create (module String_key) 16 in
-  Hashtbl.replace tbl ~key:"b" ~data:2;
-  Hashtbl.replace tbl ~key:"a" ~data:1;
+  Hashtbl.set tbl ~key:"b" ~data:2;
+  Hashtbl.set tbl ~key:"a" ~data:1;
   print_s ([%sexp_of: int Hashtbl.M(String_key).t] tbl);
   [%expect {| ((a 1) (b 2)) |}];
   let set = Hashset.create (module Int_key) 16 in
@@ -110,8 +110,8 @@ let%expect_test "dyn_of_m__t (no ppx for Dyn.t yet, called directly)" =
   print_dyn (Set.dyn_of_m__t (module Int_key) s);
   [%expect {| set { 1; 2; 3 } |}];
   let tbl = Hashtbl.create (module String_key) 16 in
-  Hashtbl.replace tbl ~key:"b" ~data:2;
-  Hashtbl.replace tbl ~key:"a" ~data:1;
+  Hashtbl.set tbl ~key:"b" ~data:2;
+  Hashtbl.set tbl ~key:"a" ~data:1;
   print_dyn (Hashtbl.dyn_of_m__t (module String_key) Dyn.int tbl);
   [%expect {| map { "a" : 1; "b" : 2 } |}];
   let set = Hashset.create (module Int_key) 16 in

@@ -18,7 +18,10 @@
 
   - Remove the functors and module type signatures. Remove the generic and
   polymorphic versions. Keep only the former functorized interface but defunc,
-  that is require [equal] and [seeded_hash] everywhere needed. *)
+  that is require [equal] and [seeded_hash] everywhere needed.
+
+  - Add [remove_all], to remove every binding of a key at once, including any
+  shadowed by [add]. *)
 
 (**************************************************************************)
 (*                                                                        *)
@@ -320,6 +323,23 @@ let find_and_remove ~equal ~seeded_hash h key =
 let remove ~equal ~seeded_hash h key =
   let i = key_index ~seeded_hash h key in
   ignore (remove_bucket ~equal h i key Empty h.data.(i) : _ bucketlist)
+
+let rec remove_all_bucket ~equal h i key prec = function
+  | Empty -> ()
+  | Cons { key = k; next; _ } as cell ->
+      if equal k key then begin
+        h.size <- h.size - 1;
+        begin match prec with
+        | Empty -> h.data.(i) <- next
+        | Cons c -> c.next <- next
+        end;
+        remove_all_bucket ~equal h i key prec next
+      end
+      else remove_all_bucket ~equal h i key cell next
+
+let remove_all ~equal ~seeded_hash h key =
+  let i = key_index ~seeded_hash h key in
+  remove_all_bucket ~equal h i key Empty h.data.(i)
 
 let rec find_rec ~equal key = function
   | Empty -> raise Not_found

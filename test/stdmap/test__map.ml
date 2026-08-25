@@ -28,6 +28,13 @@ let%expect_test "singleton" =
   [%expect {| 1 |}];
   print_bindings m;
   [%expect {| [ (1, "one") ] |}];
+  (* [singleton] builds its one-node tree directly, without calling the
+     comparator - it only stores it for later use. Add bindings on both
+     sides of the existing key to exercise that stored comparator. *)
+  let m = Map.add 2 "two" m in
+  let m = Map.add 0 "zero" m in
+  print_bindings m;
+  [%expect {| [ (0, "zero"); (1, "one"); (2, "two") ] |}];
   ()
 ;;
 
@@ -58,6 +65,16 @@ let%expect_test "remove" =
   let m3 = Map.remove 99 m in
   require (phys_equal m m3);
   [%expect {||}];
+  (* [3, "three"; 2, "two"; 1, "one"] builds a map whose root (3) has a
+     non-trivial left subtree {1, 2} and no right subtree, so removing a
+     key below the root exercises remove's Lt branch in both directions. *)
+  let m4 = Map.of_list (module Int) [ 3, "three"; 2, "two"; 1, "one" ] in
+  let m5 = Map.remove 0 m4 in
+  require (phys_equal m4 m5);
+  [%expect {||}];
+  let m6 = Map.remove 1 m4 in
+  print_bindings m6;
+  [%expect {| [ (2, "two"); (3, "three") ] |}];
   ()
 ;;
 
@@ -145,6 +162,16 @@ let%expect_test "update" =
   let m4 = Map.update 3 (fun _ -> Some "three") m in
   print_bindings m4;
   [%expect {| [ (1, "one"); (2, "two"); (3, "three") ] |}];
+  (* Same shape as in the "remove" test above: a root with a non-trivial
+     left subtree and no right subtree, exercising update's Lt branch in
+     both directions. *)
+  let m5 = Map.of_list (module Int) [ 3, "three"; 2, "two"; 1, "one" ] in
+  let m6 = Map.update 0 (fun v -> v) m5 in
+  require (phys_equal m5 m6);
+  [%expect {||}];
+  let m7 = Map.update 1 (fun v -> Option.map String.uppercase_ascii v) m5 in
+  print_bindings m7;
+  [%expect {| [ (1, "ONE"); (2, "two"); (3, "three") ] |}];
   ()
 ;;
 
@@ -171,6 +198,13 @@ let%expect_test "union" =
   let u = Map.union (fun _key v1 v2 -> Some (v1 ^ "+" ^ v2)) m1 m2 in
   print_bindings u;
   [%expect {| [ (1, "a"); (2, "b+B"); (3, "C") ] |}];
+  (* A much taller second map, overlapping on a key, exercises union's
+     h1 < h2 branch with that key present on both sides. *)
+  let small = Map.of_list (module Int) [ 5, "FIVE" ] in
+  let big = Map.of_list (module Int) (List.init 20 (fun i -> i, string_of_int i)) in
+  let u2 = Map.union (fun _key v1 v2 -> Some (v1 ^ "+" ^ v2)) small big in
+  print_dyn (Map.find 5 u2 |> Dyn.string);
+  [%expect {| "FIVE+5" |}];
   ()
 ;;
 
@@ -185,6 +219,14 @@ let%expect_test "equal / compare" =
   print_dyn (Map.compare String.compare m1 m2 |> Dyn.int);
   [%expect {| 0 |}];
   require (Map.compare String.compare m1 m3 <> 0);
+  [%expect {||}];
+  (* Maps with a differing key (rather than differing data at the same
+     key) exercise compare's key comparator in both directions. *)
+  let m4 = Map.of_list (module Int) [ 1, "a"; 2, "b" ] in
+  let m5 = Map.of_list (module Int) [ 1, "a"; 5, "b" ] in
+  require (Map.compare String.compare m4 m5 < 0);
+  [%expect {||}];
+  require (Map.compare String.compare m5 m4 > 0);
   [%expect {||}];
   ()
 ;;
@@ -335,6 +377,19 @@ let%expect_test "filter" =
   let m2 = Map.filter (fun _k _v -> true) m in
   require (phys_equal m m2);
   [%expect {||}];
+  (* Keeping a large contiguous low range plus a small high range means
+     that, once the (dropped) boundary is reached, filter's [join] combines
+     a much taller "kept low" subtree with a short "kept high" one -
+     exercising join's lh > rh + 2 rebalancing case. *)
+  let big = Map.of_list (module Int) (List.init 1000 (fun i -> i, string_of_int i)) in
+  let m3 = Map.filter (fun k _v -> k < 500 || k >= 990) big in
+  print_dyn (Map.cardinal m3 |> Dyn.int);
+  [%expect {| 510 |}];
+  (* Mirror of the above: a small low range plus a large high range
+     exercises join's rh > lh + 2 rebalancing case. *)
+  let m4 = Map.filter (fun k _v -> k < 10 || k >= 500) big in
+  print_dyn (Map.cardinal m4 |> Dyn.int);
+  [%expect {| 510 |}];
   ()
 ;;
 

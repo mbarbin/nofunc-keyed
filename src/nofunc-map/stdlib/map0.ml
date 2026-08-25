@@ -19,7 +19,16 @@
   - Remove the functor and signature. Make the type parametrized by the type of
   elements. Require [compare] everywhere needed.
 
-  - Require the [compare] argument to return [Ordering.t] instead of [int]. *)
+  - Require the [compare] argument to return [Ordering.t] instead of [int].
+
+  - Mark [bal]'s [invalid_arg] branches [@coverage off]: they guard against a
+  broken AVL invariant (a child empty when the height difference guarantees it
+  isn't); not tested, as they are not meant to be reached through this module's
+  public interface.
+
+  - Mark [remove_min_binding]'s [Empty] case [@coverage off], for the same
+  reason: every call site (in [merge] and [concat]) already pattern-matches its
+  argument as non-empty before calling it. *)
 
 (**************************************************************************)
 (*                                                                        *)
@@ -63,24 +72,24 @@ let bal l x d r =
   let hr = match r with Empty -> 0 | Node { h } -> h in
   if hl > hr + 2 then
     begin match l with
-    | Empty -> invalid_arg "Map.bal"
+    | Empty -> invalid_arg "Map.bal" [@coverage off]
     | Node { l = ll; v = lv; d = ld; r = lr } ->
         if height ll >= height lr then create ll lv ld (create lr x d r)
         else
           begin match lr with
-          | Empty -> invalid_arg "Map.bal"
+          | Empty -> invalid_arg "Map.bal" [@coverage off]
           | Node { l = lrl; v = lrv; d = lrd; r = lrr } ->
               create (create ll lv ld lrl) lrv lrd (create lrr x d r)
           end
     end
   else if hr > hl + 2 then
     begin match r with
-    | Empty -> invalid_arg "Map.bal"
+    | Empty -> invalid_arg "Map.bal" [@coverage off]
     | Node { l = rl; v = rv; d = rd; r = rr } ->
         if height rr >= height rl then create (create l x d rl) rv rd rr
         else
           begin match rl with
-          | Empty -> invalid_arg "Map.bal"
+          | Empty -> invalid_arg "Map.bal" [@coverage off]
           | Node { l = rll; v = rlv; d = rld; r = rlr } ->
               create (create l x d rll) rlv rld (create rlr rv rd rr)
           end
@@ -190,7 +199,7 @@ let rec max_binding_opt = function
   | Node { r } -> max_binding_opt r
 
 let rec remove_min_binding = function
-  | Empty -> invalid_arg "Map.remove_min_elt"
+  | Empty -> invalid_arg "Map.remove_min_elt" [@coverage off]
   | Node { l = Empty; r } -> r
   | Node { l; v; d; r } -> bal (remove_min_binding l) v d r
 
