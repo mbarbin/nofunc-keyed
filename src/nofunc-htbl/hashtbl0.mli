@@ -45,7 +45,7 @@
     Hash tables are hashed association tables, with in-place modification.
     Because most operations on a hash table modify their input, they're more
     commonly used in imperative code. The lookup of the value associated with a
-    key (see {!find}, {!find_opt}) is normally very fast, often faster than the
+    key (see {!find}, {!find_exn}) is normally very fast, often faster than the
     equivalent lookup in [Map].
 
     {b Warning} a hash table is only as good as the hash function. A bad hash
@@ -94,13 +94,13 @@ val copy : ('a, 'b) t -> ('a, 'b) t
     see {!replace}. *)
 val add : ('a, 'b) t -> key:'a -> data:'b -> unit
 
-(** [find tbl key] returns the current binding of [key] in [tbl], or raises
-    [Not_found] if no such binding exists. *)
-val find : ('a, 'b) t -> 'a -> 'b
-
-(** [find_opt tbl key] returns the current binding of [key] in [tbl], or [None]
+(** [find tbl key] returns the current binding of [key] in [tbl], or [None]
     if no such binding exists. *)
-val find_opt : ('a, 'b) t -> 'a -> 'b option
+val find : ('a, 'b) t -> 'a -> 'b option
+
+(** [find_exn tbl key] returns the current binding of [key] in [tbl], or raises
+    [Not_found] if no such binding exists. *)
+val find_exn : ('a, 'b) t -> 'a -> 'b
 
 (** [find_all tbl key] returns the list of all data associated with [key] in
     [tbl]. The current binding is returned first, then the previous bindings, in

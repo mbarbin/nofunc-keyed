@@ -19,8 +19,8 @@ let clear t = Tbl.clear t.tbl
 let reset t = Tbl.reset t.tbl
 let copy t = { equal = t.equal; seeded_hash = t.seeded_hash; tbl = Tbl.copy t.tbl }
 let add t ~key ~data = Tbl.add ~seeded_hash:t.seeded_hash t.tbl key data
-let find t key = Tbl.find ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
-let find_opt t key = Tbl.find_opt ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
+let find t key = Tbl.find_opt ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
+let find_exn t key = Tbl.find ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
 let find_all t key = Tbl.find_all ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
 let mem t key = Tbl.mem ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
 let remove t key = Tbl.remove ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key

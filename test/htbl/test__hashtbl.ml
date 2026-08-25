@@ -20,15 +20,15 @@ let print_bindings tbl =
   print_dyn (sorted_bindings tbl |> Dyn.list (Dyn.pair Dyn.int Dyn.string))
 ;;
 
-let%expect_test "create / length / add / find / find_opt / find_all / mem" =
+let%expect_test "create / length / add / find / find_exn / find_all / mem" =
   let tbl = Hashtbl.create (module Int) 16 in
   Hashtbl.add tbl ~key:1 ~data:"one";
   Hashtbl.add tbl ~key:1 ~data:"ONE";
   print_dyn (Hashtbl.length tbl |> Dyn.int);
   [%expect {| 2 |}];
-  print_dyn (Hashtbl.find tbl 1 |> Dyn.string);
+  print_dyn (Hashtbl.find_exn tbl 1 |> Dyn.string);
   [%expect {| "ONE" |}];
-  print_dyn (Hashtbl.find_opt tbl 1 |> Dyn.option Dyn.string);
+  print_dyn (Hashtbl.find tbl 1 |> Dyn.option Dyn.string);
   [%expect {| Some "ONE" |}];
   print_dyn (Hashtbl.find_all tbl 1 |> Dyn.list Dyn.string);
   [%expect {| [ "ONE"; "one" ] |}];

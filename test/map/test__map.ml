@@ -51,7 +51,7 @@ let%expect_test "add / update / remove" =
   require (phys_equal m1 m2);
   [%expect {||}];
   let m = Map.update m 1 ~f:(fun v -> Option.map String.uppercase_ascii v) in
-  print_binding (1, Map.find m 1);
+  print_binding (1, Map.find_exn m 1);
   [%expect {| (1, "ONE") |}];
   let m = Map.remove m 2 in
   print_dyn (Map.mem m 2 |> Dyn.bool);
@@ -63,12 +63,12 @@ let%expect_test "add_to_list" =
   let m = Map.empty (module Int) in
   let m = Map.add_to_list m ~key:3 ~data:"a" in
   let m = Map.add_to_list m ~key:3 ~data:"b" in
-  print_dyn (Map.find m 3 |> Dyn.list Dyn.string);
+  print_dyn (Map.find_exn m 3 |> Dyn.list Dyn.string);
   [%expect {| [ "b"; "a" ] |}];
   ()
 ;;
 
-let%expect_test "of_list / mem / find / find_opt" =
+let%expect_test "of_list / mem / find / find_exn" =
   let m = Map.of_list (module Int) [ 3, "three"; 1, "one"; 2, "two"; 1, "ONE" ] in
   print_bindings m;
   [%expect {| [ (1, "ONE"); (2, "two"); (3, "three") ] |}];
@@ -76,11 +76,11 @@ let%expect_test "of_list / mem / find / find_opt" =
   [%expect {| true |}];
   print_dyn (Map.mem m 4 |> Dyn.bool);
   [%expect {| false |}];
-  print_dyn (Map.find m 2 |> Dyn.string);
+  print_dyn (Map.find_exn m 2 |> Dyn.string);
   [%expect {| "two" |}];
-  require_does_raise (fun () -> Map.find m 4);
+  require_does_raise (fun () -> Map.find_exn m 4);
   [%expect {| Not_found |}];
-  print_dyn (Map.find_opt m 4 |> Dyn.option Dyn.string);
+  print_dyn (Map.find m 4 |> Dyn.option Dyn.string);
   [%expect {| None |}];
   ()
 ;;
