@@ -1,0 +1,5 @@
+(library
+ (name nofunc_set)
+ (public_name nofunc-set)
+ (instrumentation
+  (backend bisect_ppx)))
