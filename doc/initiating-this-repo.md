@@ -135,3 +135,23 @@ it from the `std` flavor.
    structures (`check_same_compare`); and `compare`, an `Ordering`-returning
    closure derived from it via `Ordering.of_int`, used for the actual tree
    operations. Both packages depend on `ordering` directly for this.
+
+5. Copy the top-level `ml`/`mli` files of each `std` package verbatim into its
+   `non-std` counterpart, giving each `non-std` package a clean starting point
+   to iterate and diverge from: `map0`/`nofunc_stdmap` into `nofunc-map`,
+   `set0`/`nofunc_stdset` into `nofunc-set`, `hashtbl0`/`nofunc_stdhtbl` into
+   `nofunc-htbl`, and `hashset0`/`nofunc_stdhset` into `nofunc-hset`.
+
+   This is a pure copy: file contents are byte-for-byte identical to their
+   `std` source, module references included. As a result the tree doesn't
+   build at this commit, the same intentional temporary breakage already used
+   in Step 1: `map0.ml`/`set0.ml`/`hashtbl0.ml` reference their own package's
+   `.stdlib` sub-library without depending on it in `dune` yet, and
+   `hashset0.ml` still references `Nofunc_stdhtbl`, the `std` package, instead
+   of the `non-std` one.
+
+6. Fix up the four `non-std` packages so they build against their own sources:
+   add the missing `libraries` dependencies (`.stdlib` sub-library, and
+   `ordering` where `map0.ml`/`set0.ml` need it), and rewire `hashset0.ml` to
+   `Nofunc_htbl.Hashtbl` instead of `Nofunc_stdhtbl.Hashtbl`, with `nofunc-hset`
+   now depending on `nofunc-htbl`. The tree builds again from this commit on.
