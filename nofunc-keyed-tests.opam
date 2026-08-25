@@ -23,7 +23,7 @@ depends: [
   "pp" {>= "2.0.0"}
   "ppx_expect" {>= "v0.17"}
   "ppx_sexp_conv" {>= "v0.17"}
-  "sexplib0" {>= "v0.16"}
+  "sexplib0" {>= "v0.17"}
   "odoc" {with-doc}
 ]
 build: [

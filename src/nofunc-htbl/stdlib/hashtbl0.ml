@@ -319,7 +319,7 @@ let find_and_remove ~equal ~seeded_hash h key =
 
 let remove ~equal ~seeded_hash h key =
   let i = key_index ~seeded_hash h key in
-  ignore (remove_bucket ~equal h i key Empty h.data.(i))
+  ignore (remove_bucket ~equal h i key Empty h.data.(i) : _ bucketlist)
 
 let rec find_rec ~equal key = function
   | Empty -> raise Not_found

@@ -21,8 +21,8 @@ depends: [
   "nofunc-stdhtbl" {= version}
   "nofunc-stdmap" {= version}
   "nofunc-stdset" {= version}
-  "sherlodoc" {>= "0.2"}
-  "odoc" {with-doc}
+  "ppx_js_style" {>= "v0.17"}
+  "odoc" {>= "3.0.0"}
 ]
 build: [
   ["dune" "subst"] {dev}

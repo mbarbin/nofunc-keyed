@@ -150,7 +150,7 @@
   (ppx_sexp_conv
    (>= v0.17))
   (sexplib0
-   (>= v0.16))))
+   (>= v0.17))))
 
 (package
  (name nofunc-keyed-dev)
@@ -181,5 +181,7 @@
    (= :version))
   (nofunc-stdset
    (= :version))
-  (sherlodoc
-   (>= 0.2))))
+  (ppx_js_style
+   (>= v0.17))
+  (odoc
+   (>= 3.0.0))))

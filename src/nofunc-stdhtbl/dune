@@ -3,4 +3,5 @@
  (public_name nofunc-stdhtbl)
  (libraries nofunc-htbl.stdlib)
  (instrumentation
-  (backend bisect_ppx)))
+  (backend bisect_ppx))
+ (preprocess no_preprocessing))
