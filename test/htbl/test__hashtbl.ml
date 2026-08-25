@@ -97,6 +97,51 @@ let%expect_test "remove_all: clears every shadowed binding for a key at once" =
   ()
 ;;
 
+(* [Collider] hashes every key to the same bucket (0), regardless of table
+   capacity, while still distinguishing keys by [equal]. This exercises
+   [remove_all]'s bucket-splicing against colliding, interleaved keys, rather
+   than against keys that (with a well-behaved hash function) would likely
+   land in distinct buckets. *)
+module Collider = struct
+  type t = int
+
+  let equal = Int.equal
+  let hash (_ : t) = 0
+end
+
+let%expect_test
+    "remove_all: only removes the matching key from a bucket shared by colliding keys"
+  =
+  let tbl = Hashtbl.create (module Collider) 16 in
+  (* Every key below hashes to 0, so they all land in the same bucket, in
+     the order they were added, most recently added first:
+     [2, "f"; 1, "e"; 3, "d"; 1, "c"; 2, "b"; 1, "a"]. Key [1]'s three
+     bindings are scattered through the bucket, not adjacent to one another. *)
+  Hashtbl.shadow tbl ~key:1 ~data:"a";
+  Hashtbl.shadow tbl ~key:2 ~data:"b";
+  Hashtbl.shadow tbl ~key:1 ~data:"c";
+  Hashtbl.shadow tbl ~key:3 ~data:"d";
+  Hashtbl.shadow tbl ~key:1 ~data:"e";
+  Hashtbl.shadow tbl ~key:2 ~data:"f";
+  print_dyn (Hashtbl.length tbl |> Dyn.int);
+  [%expect {| 6 |}];
+  Hashtbl.remove_all tbl 1;
+  (* Every binding for [1] is gone... *)
+  print_dyn (Hashtbl.find_all tbl 1 |> Dyn.list Dyn.string);
+  [%expect {| [] |}];
+  print_dyn (Hashtbl.mem tbl 1 |> Dyn.bool);
+  [%expect {| false |}];
+  (* ...while the interleaved bindings for [2] and [3], which merely share
+     [1]'s bucket, are all still there, in their original relative order. *)
+  print_dyn (Hashtbl.find_all tbl 2 |> Dyn.list Dyn.string);
+  [%expect {| [ "f"; "b" ] |}];
+  print_dyn (Hashtbl.find_all tbl 3 |> Dyn.list Dyn.string);
+  [%expect {| [ "d" ] |}];
+  print_dyn (Hashtbl.length tbl |> Dyn.int);
+  [%expect {| 3 |}];
+  ()
+;;
+
 let%expect_test "set / find_and_replace / find_and_remove / remove" =
   let tbl = Hashtbl.create (module Int) 16 in
   Hashtbl.set tbl ~key:1 ~data:"one";
