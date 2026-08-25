@@ -18,6 +18,11 @@
     diverge.
 
   - Take the set as the first argument. Label closures [~f].
+
+  - Add a "Modular explicit usage" section, with a Base-style [M] functor and
+    [sexp_of_m__t] / [dyn_of_m__t] derivers requiring a [compare] function, used
+    to sort elements before building the result, since iteration order is
+    unspecified.
 *)
 
 (**************************************************************************)
@@ -139,3 +144,45 @@ val create : (module Hashtbl.HashedType with type t = 'a) -> int -> 'a t
 
 (** Same as {!of_seq_seeded} but never randomized. *)
 val of_seq : (module Hashtbl.HashedType with type t = 'a) -> 'a Seq.t -> 'a t
+
+(** {1:modular Modular explicit usage}
+
+    The declarations below offer an alternative, module-based style for fixing
+    the element type at a single first-class module, in the tradition of
+    Base's [Hash_set.M(Elt).t]. They also provide ways to derive [sexp_of_t]
+    and [to_dyn] for a hash set, given a first-class module for the elements.
+
+    Since the iteration order of a hash set is unspecified, the first-class
+    module supplied to {!val:sexp_of_m__t} and {!val:dyn_of_m__t} is required
+    to provide a [compare] function, used to sort the elements before building
+    the resulting value, so that the output is deterministic. *)
+
+module M (T : sig
+    type t
+  end) : sig
+  type nonrec t = T.t t
+end
+
+(** Input signature for {!val:sexp_of_m__t}. *)
+module type Sexpable = sig
+  type t
+
+  val compare : t -> t -> Ordering.t
+  val sexp_of_t : t -> Sexplib0.Sexp.t
+end
+
+(** [sexp_of_m__t (module Elt) set] converts [set] to an s-expression, listing
+    the elements sorted by [Elt.compare]. *)
+val sexp_of_m__t : (module Sexpable with type t = 'a) -> 'a t -> Sexplib0.Sexp.t
+
+(** Input signature for {!val:dyn_of_m__t}. *)
+module type Dynable = sig
+  type t
+
+  val compare : t -> t -> Ordering.t
+  val to_dyn : t -> Dyn.t
+end
+
+(** [dyn_of_m__t (module Elt) set] converts [set] to a [Dyn.t], built the same
+    way as {!val:sexp_of_m__t}. *)
+val dyn_of_m__t : (module Dynable with type t = 'a) -> 'a t -> Dyn.t

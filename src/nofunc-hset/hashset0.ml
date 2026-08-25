@@ -40,3 +40,40 @@ let of_seq mkey seq =
   Seq.iter (fun key -> add t key) seq;
   t
 ;;
+
+module M (T : sig
+    type t
+  end) =
+struct
+  type nonrec t = T.t t
+end
+
+module type Sexpable = sig
+  type t
+
+  val compare : t -> t -> Ordering.t
+  val sexp_of_t : t -> Sexplib0.Sexp.t
+end
+
+let sexp_of_m__t (type elt) (module T : Sexpable with type t = elt) t =
+  Sexplib0.Sexp.List
+    (to_seq t
+     |> List.of_seq
+     |> List.sort (fun elt1 elt2 -> Ordering.to_int (T.compare elt1 elt2))
+     |> List.map T.sexp_of_t)
+;;
+
+module type Dynable = sig
+  type t
+
+  val compare : t -> t -> Ordering.t
+  val to_dyn : t -> Dyn.t
+end
+
+let dyn_of_m__t (type elt) (module T : Dynable with type t = elt) t =
+  Dyn.Set
+    (to_seq t
+     |> List.of_seq
+     |> List.sort (fun elt1 elt2 -> Ordering.to_int (T.compare elt1 elt2))
+     |> List.map T.to_dyn)
+;;

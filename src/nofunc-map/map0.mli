@@ -23,7 +23,10 @@
   - Require [Ord.compare] to return [Ordering.t] instead of [int].
 
   - Take the map as the first argument. Label closures [~f], and the key and
-    data of a binding [~key] and [~data]. *)
+    data of a binding [~key] and [~data].
+
+  - Add a "Modular explicit usage" section, with a Base-style [M] functor and
+    [sexp_of_m__t] / [dyn_of_m__t] derivers. *)
 
 (**************************************************************************)
 (*                                                                        *)
@@ -335,3 +338,48 @@ val add_seq : ('key, 'a) t -> ('key * 'a) Seq.t -> ('key, 'a) t
 
 (** Build a map from the given bindings. *)
 val of_seq : (module OrderedType with type t = 'key) -> ('key * 'a) Seq.t -> ('key, 'a) t
+
+(** {1:modular Modular explicit usage}
+
+    The declarations below offer an alternative, module-based style for fixing
+    the key type at a single first-class module, in the tradition of Base's
+    [Map.M(Key).t]. They also provide ways to derive [sexp_of_t] and [to_dyn]
+    for a map, given a first-class module for the keys and a converter for the
+    data. *)
+
+module M (T : sig
+    type t
+  end) : sig
+  type nonrec 'a t = (T.t, 'a) t
+end
+
+(** Input signature for {!val:sexp_of_m__t}. *)
+module type Sexpable = sig
+  type t
+
+  val sexp_of_t : t -> Sexplib0.Sexp.t
+end
+
+(** [sexp_of_m__t (module Key) sexp_of_data m] converts [m] to an s-expression,
+    representing each binding as a two-element list of the key and data
+    s-expressions, in the order given by {!val:bindings}. *)
+val sexp_of_m__t
+  :  (module Sexpable with type t = 'key)
+  -> ('a -> Sexplib0.Sexp.t)
+  -> ('key, 'a) t
+  -> Sexplib0.Sexp.t
+
+(** Input signature for {!val:dyn_of_m__t}. *)
+module type Dynable = sig
+  type t
+
+  val to_dyn : t -> Dyn.t
+end
+
+(** [dyn_of_m__t (module Key) data_to_dyn m] converts [m] to a [Dyn.t], built
+    the same way as {!val:sexp_of_m__t}. *)
+val dyn_of_m__t
+  :  (module Dynable with type t = 'key)
+  -> ('a -> Dyn.t)
+  -> ('key, 'a) t
+  -> Dyn.t

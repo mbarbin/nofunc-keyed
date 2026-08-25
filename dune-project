@@ -29,15 +29,27 @@
  (depends
   (ocaml
    (>= 5.2))
+  (dyn
+   (>= 3.20))
   (nofunc-htbl
-   (= :version))))
+   (= :version))
+  (ordering
+   (>= 3.20))
+  (sexplib0
+   (>= v0.16))))
 
 (package
  (name nofunc-htbl)
  (synopsis "Hashtbl with an opinionated nofunc API (non-std)")
  (depends
   (ocaml
-   (>= 5.2))))
+   (>= 5.2))
+  (dyn
+   (>= 3.20))
+  (ordering
+   (>= 3.20))
+  (sexplib0
+   (>= v0.16))))
 
 (package
  (name nofunc-map)
@@ -45,8 +57,12 @@
  (depends
   (ocaml
    (>= 4.14))
+  (dyn
+   (>= 3.20))
   (ordering
-   (>= 3.20))))
+   (>= 3.20))
+  (sexplib0
+   (>= v0.16))))
 
 (package
  (name nofunc-set)
@@ -54,8 +70,12 @@
  (depends
   (ocaml
    (>= 4.14))
+  (dyn
+   (>= 3.20))
   (ordering
-   (>= 3.20))))
+   (>= 3.20))
+  (sexplib0
+   (>= v0.16))))
 
 (package
  (name nofunc-stdhset)
@@ -132,5 +152,9 @@
    (>= 2.0.0))
   (ppx_expect
    (>= v0.17))
+  (ppx_sexp_conv
+   (>= v0.17))
+  (sexplib0
+   (>= v0.16))
   (sherlodoc
    (>= 0.2))))

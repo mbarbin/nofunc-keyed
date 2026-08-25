@@ -10,7 +10,7 @@
   +a
   -open
   Nofunc_stdlib)
- (libraries nofunc-set nofunc_stdlib ordering)
+ (libraries nofunc-set nofunc_stdlib ordering sexplib0)
  (instrumentation
   (backend bisect_ppx))
  (preprocess

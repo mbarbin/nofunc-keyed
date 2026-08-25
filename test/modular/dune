@@ -1,5 +1,5 @@
 (library
- (name hset_test)
+ (name modular_test)
  (package nofunc-keyed-dev)
  (inline_tests)
  (flags
@@ -10,8 +10,15 @@
   +a
   -open
   Nofunc_stdlib)
- (libraries nofunc-hset nofunc_stdlib ordering sexplib0)
+ (libraries
+  nofunc-hset
+  nofunc-htbl
+  nofunc-map
+  nofunc-set
+  nofunc_stdlib
+  ordering
+  sexplib0)
  (instrumentation
   (backend bisect_ppx))
  (preprocess
-  (pps ppx_expect)))
+  (pps ppx_expect ppx_sexp_conv)))

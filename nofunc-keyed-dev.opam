@@ -24,6 +24,8 @@ depends: [
   "ordering" {>= "3.20"}
   "pp" {>= "2.0.0"}
   "ppx_expect" {>= "v0.17"}
+  "ppx_sexp_conv" {>= "v0.17"}
+  "sexplib0" {>= "v0.16"}
   "sherlodoc" {>= "0.2"}
   "odoc" {with-doc}
 ]

@@ -22,7 +22,10 @@
 
   - Require [Ord.compare] to return [Ordering.t] instead of [int].
 
-  - Take the set as the first argument. Label closures [~f]. *)
+  - Take the set as the first argument. Label closures [~f].
+
+  - Add a "Modular explicit usage" section, with a Base-style [M] functor and
+    [sexp_of_m__t] / [dyn_of_m__t] derivers. *)
 
 (**************************************************************************)
 (*                                                                        *)
@@ -284,3 +287,38 @@ val add_seq : 'elt t -> 'elt Seq.t -> 'elt t
 
 (** Build a set from the given elements. *)
 val of_seq : (module OrderedType with type t = 'elt) -> 'elt Seq.t -> 'elt t
+
+(** {1:modular Modular explicit usage}
+
+    The declarations below offer an alternative, module-based style for fixing
+    the element type at a single first-class module, in the tradition of
+    Base's [Set.M(Elt).t]. They also provide ways to derive [sexp_of_t] and
+    [to_dyn] for a set, given a first-class module for the elements. *)
+
+module M (T : sig
+    type t
+  end) : sig
+  type nonrec t = T.t t
+end
+
+(** Input signature for {!val:sexp_of_m__t}. *)
+module type Sexpable = sig
+  type t
+
+  val sexp_of_t : t -> Sexplib0.Sexp.t
+end
+
+(** [sexp_of_m__t (module Elt) s] converts [s] to an s-expression, listing the
+    elements in the order given by {!val:elements}. *)
+val sexp_of_m__t : (module Sexpable with type t = 'elt) -> 'elt t -> Sexplib0.Sexp.t
+
+(** Input signature for {!val:dyn_of_m__t}. *)
+module type Dynable = sig
+  type t
+
+  val to_dyn : t -> Dyn.t
+end
+
+(** [dyn_of_m__t (module Elt) s] converts [s] to a [Dyn.t], built the same way
+    as {!val:sexp_of_m__t}. *)
+val dyn_of_m__t : (module Dynable with type t = 'elt) -> 'elt t -> Dyn.t

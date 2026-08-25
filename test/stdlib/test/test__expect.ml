@@ -55,6 +55,12 @@ let%expect_test "require_not_equal" =
   ()
 ;;
 
+let%expect_test "print_s" =
+  print_s (Sexp.List [ Sexp.Atom "hello"; Sexp.Atom "world" ]);
+  [%expect {| (hello world) |}];
+  ()
+;;
+
 let%expect_test "require_not_equal equal" =
   (match require_not_equal (module Int) 0 0 with
    | () -> assert false

@@ -1,6 +1,6 @@
 (library
  (name nofunc_stdlib)
  (public_name nofunc-keyed-dev.stdlib)
- (libraries dyn ordering pp)
+ (libraries dyn ordering pp sexplib0)
  (instrumentation
   (backend bisect_ppx)))

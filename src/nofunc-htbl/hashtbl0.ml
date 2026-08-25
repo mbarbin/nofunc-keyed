@@ -73,3 +73,41 @@ let of_seq_seeded (type key) (module Key : SeededHashedType with type t = key) ?
   ; tbl = Tbl.of_seq ~equal:Key.equal ~seeded_hash:Key.seeded_hash ?random seq
   }
 ;;
+
+module M (T : sig
+    type t
+  end) =
+struct
+  type nonrec 'a t = (T.t, 'a) t
+end
+
+module type Sexpable = sig
+  type t
+
+  val compare : t -> t -> Ordering.t
+  val sexp_of_t : t -> Sexplib0.Sexp.t
+end
+
+let sexp_of_m__t (type key) (module T : Sexpable with type t = key) sexp_of_data t =
+  Sexplib0.Sexp.List
+    (to_seq t
+     |> List.of_seq
+     |> List.sort (fun (key1, _) (key2, _) -> Ordering.to_int (T.compare key1 key2))
+     |> List.map (fun (key, data) ->
+       Sexplib0.Sexp.List [ T.sexp_of_t key; sexp_of_data data ]))
+;;
+
+module type Dynable = sig
+  type t
+
+  val compare : t -> t -> Ordering.t
+  val to_dyn : t -> Dyn.t
+end
+
+let dyn_of_m__t (type key) (module T : Dynable with type t = key) data_to_dyn t =
+  Dyn.Map
+    (to_seq t
+     |> List.of_seq
+     |> List.sort (fun (key1, _) (key2, _) -> Ordering.to_int (T.compare key1 key2))
+     |> List.map (fun (key, data) -> T.to_dyn key, data_to_dyn data))
+;;

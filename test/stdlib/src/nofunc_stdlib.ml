@@ -5,9 +5,11 @@
 (***********************************************************************************)
 
 module Dyn = Dyn
+module Sexp = Sexplib0.Sexp
 
 let print pp = Format.printf "%a@." Pp.to_fmt pp
 let print_dyn dyn = print (Dyn.pp dyn)
+let print_s sexp = print_endline (Sexp.to_string_hum sexp)
 let phys_equal a b = a == b
 
 module Int = struct
