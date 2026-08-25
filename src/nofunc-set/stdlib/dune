@@ -1,0 +1,6 @@
+(library
+ (name nofunc_set_stdlib)
+ (public_name nofunc-set.stdlib)
+ (libraries ordering)
+ (instrumentation
+  (backend bisect_ppx)))

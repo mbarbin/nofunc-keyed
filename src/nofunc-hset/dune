@@ -1,0 +1,6 @@
+(library
+ (name nofunc_hset)
+ (public_name nofunc-hset)
+ (libraries nofunc-htbl)
+ (instrumentation
+  (backend bisect_ppx)))

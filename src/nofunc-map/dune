@@ -1,0 +1,6 @@
+(library
+ (name nofunc_map)
+ (public_name nofunc-map)
+ (libraries nofunc-map.stdlib ordering)
+ (instrumentation
+  (backend bisect_ppx)))

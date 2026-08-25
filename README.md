@@ -90,6 +90,8 @@ We're experimenting with the non-standard versions in personal projects.
 
 :construction: We're currently building this project and we'll update this section once we're done with that initial phase.
 
+In particular note that the non-standard versions are work in progress and subject to more breaking changes that haven't been published yet.
+
 ## Acknowledgements
 
 There is very little if any original content in this repo. We re-packaged code from existing sources to make the libraries easily available for other projects.

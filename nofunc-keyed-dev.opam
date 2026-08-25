@@ -13,6 +13,10 @@ depends: [
   "ocamlformat" {= "0.29.0"}
   "bisect_ppx" {>= "2.8.3"}
   "dyn" {>= "3.20"}
+  "nofunc-hset" {= version}
+  "nofunc-htbl" {= version}
+  "nofunc-map" {= version}
+  "nofunc-set" {= version}
   "nofunc-stdhset" {= version}
   "nofunc-stdhtbl" {= version}
   "nofunc-stdmap" {= version}

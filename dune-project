@@ -24,6 +24,40 @@
  (allow_empty))
 
 (package
+ (name nofunc-hset)
+ (synopsis "Hashset with an opinionated nofunc API (non-std)")
+ (depends
+  (ocaml
+   (>= 5.2))
+  (nofunc-htbl
+   (= :version))))
+
+(package
+ (name nofunc-htbl)
+ (synopsis "Hashtbl with an opinionated nofunc API (non-std)")
+ (depends
+  (ocaml
+   (>= 5.2))))
+
+(package
+ (name nofunc-map)
+ (synopsis "Map with an opinionated nofunc API (non-std)")
+ (depends
+  (ocaml
+   (>= 4.14))
+  (ordering
+   (>= 3.20))))
+
+(package
+ (name nofunc-set)
+ (synopsis "Set with an opinionated nofunc API (non-std)")
+ (depends
+  (ocaml
+   (>= 4.14))
+  (ordering
+   (>= 3.20))))
+
+(package
  (name nofunc-stdhset)
  (synopsis "Hashset implemented from nofunc Hashtbl")
  (depends
@@ -37,21 +71,31 @@
  (synopsis "Hashtbl adapted from Stdlib but no functors")
  (depends
   (ocaml
-   (>= 5.2))))
+   (>= 5.2))
+  (nofunc-htbl
+   (= :version))))
 
 (package
  (name nofunc-stdmap)
  (synopsis "Map adapted from Stdlib but no functors")
  (depends
   (ocaml
-   (>= 4.14))))
+   (>= 4.14))
+  (nofunc-map
+   (= :version))
+  (ordering
+   (>= 3.20))))
 
 (package
  (name nofunc-stdset)
  (synopsis "Set adapted from Stdlib but no functors")
  (depends
   (ocaml
-   (>= 4.14))))
+   (>= 4.14))
+  (nofunc-set
+   (= :version))
+  (ordering
+   (>= 3.20))))
 
 (package
  (name nofunc-keyed-dev)
@@ -66,6 +110,14 @@
    (>= 2.8.3))
   (dyn
    (>= 3.20))
+  (nofunc-hset
+   (= :version))
+  (nofunc-htbl
+   (= :version))
+  (nofunc-map
+   (= :version))
+  (nofunc-set
+   (= :version))
   (nofunc-stdhset
    (= :version))
   (nofunc-stdhtbl

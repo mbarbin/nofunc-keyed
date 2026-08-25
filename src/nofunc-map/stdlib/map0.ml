@@ -1,6 +1,6 @@
 (***********************************************************************************)
 (*  nofunc-keyed: Keyed data structures adapted from OCaml Stdlib but no functors  *)
-(*  SPDX-FileCopyrightText: 2025 Mathieu Barbin <mathieu.barbin@gmail.com>         *)
+(*  SPDX-FileCopyrightText: 2025-2026 Mathieu Barbin <mathieu.barbin@gmail.com>    *)
 (*  SPDX-License-Identifier: LGPL-2.1-or-later WITH OCaml-LGPL-linking-exception   *)
 (***********************************************************************************)
 
@@ -17,7 +17,9 @@
   - disable warning 9 via directive
 
   - Remove the functor and signature. Make the type parametrized by the type of
-  elements. Require [compare] everywhere needed. *)
+  elements. Require [compare] everywhere needed.
+
+  - Require the [compare] argument to return [Ordering.t] instead of [int]. *)
 
 (**************************************************************************)
 (*                                                                        *)
@@ -42,7 +44,7 @@
 let compare = `shadow_stdlib_compare
 let _ = compare
 
-type 'key compare = 'key -> 'key -> int
+type 'key compare = 'key -> 'key -> Ordering.t
 
 type ('key, 'a) t =
   | Empty
@@ -92,23 +94,25 @@ let is_singleton = function
   | Node { l = Empty; r = Empty } -> true
   | Empty | Node _ -> false
 
-let rec add ~compare x data = function
+let rec add ~(compare : _ compare) x data = function
   | Empty -> Node { l = Empty; v = x; d = data; r = Empty; h = 1 }
-  | Node { l; v; d; r; h } as m ->
-      let c = compare x v in
-      if c = 0 then if d == data then m else Node { l; v = x; d = data; r; h }
-      else if c < 0 then
-        let ll = add ~compare x data l in
-        if l == ll then m else bal ll v d r
-      else
-        let rr = add ~compare x data r in
-        if r == rr then m else bal l v d rr
+  | Node { l; v; d; r; h } as m -> (
+      match compare x v with
+      | Eq -> if d == data then m else Node { l; v = x; d = data; r; h }
+      | Lt ->
+          let ll = add ~compare x data l in
+          if l == ll then m else bal ll v d r
+      | Gt ->
+          let rr = add ~compare x data r in
+          if r == rr then m else bal l v d rr)
 
-let rec find ~compare x = function
+let rec find ~(compare : _ compare) x = function
   | Empty -> raise Not_found
-  | Node { l; v; d; r } ->
-      let c = compare x v in
-      if c = 0 then d else find ~compare x (if c < 0 then l else r)
+  | Node { l; v; d; r } -> (
+      match compare x v with
+      | Eq -> d
+      | Lt -> find ~compare x l
+      | Gt -> find ~compare x r)
 
 let rec find_first_aux v0 d0 f = function
   | Empty -> (v0, d0)
@@ -149,17 +153,21 @@ let rec find_last_opt f = function
   | Node { l; v; d; r } ->
       if f v then find_last_opt_aux v d f r else find_last_opt f l
 
-let rec find_opt ~compare x = function
+let rec find_opt ~(compare : _ compare) x = function
   | Empty -> None
-  | Node { l; v; d; r } ->
-      let c = compare x v in
-      if c = 0 then Some d else find_opt ~compare x (if c < 0 then l else r)
+  | Node { l; v; d; r } -> (
+      match compare x v with
+      | Eq -> Some d
+      | Lt -> find_opt ~compare x l
+      | Gt -> find_opt ~compare x r)
 
-let rec mem ~compare x = function
+let rec mem ~(compare : _ compare) x = function
   | Empty -> false
-  | Node { l; v; r } ->
-      let c = compare x v in
-      c = 0 || mem ~compare x (if c < 0 then l else r)
+  | Node { l; v; r } -> (
+      match compare x v with
+      | Eq -> true
+      | Lt -> mem ~compare x l
+      | Gt -> mem ~compare x r)
 
 let rec min_binding = function
   | Empty -> raise Not_found
@@ -194,38 +202,37 @@ let merge t1 t2 =
       let x, d = min_binding t2 in
       bal t1 x d (remove_min_binding t2)
 
-let rec remove ~compare x = function
+let rec remove ~(compare : _ compare) x = function
   | Empty -> Empty
-  | Node { l; v; d; r } as m ->
-      let c = compare x v in
-      if c = 0 then merge l r
-      else if c < 0 then
-        let ll = remove ~compare x l in
-        if l == ll then m else bal ll v d r
-      else
-        let rr = remove ~compare x r in
-        if r == rr then m else bal l v d rr
+  | Node { l; v; d; r } as m -> (
+      match compare x v with
+      | Eq -> merge l r
+      | Lt ->
+          let ll = remove ~compare x l in
+          if l == ll then m else bal ll v d r
+      | Gt ->
+          let rr = remove ~compare x r in
+          if r == rr then m else bal l v d rr)
 
-let rec update ~compare x f = function
+let rec update ~(compare : _ compare) x f = function
   | Empty ->
       begin match f None with
       | None -> Empty
       | Some data -> Node { l = Empty; v = x; d = data; r = Empty; h = 1 }
       end
-  | Node { l; v; d; r; h } as m ->
-      let c = compare x v in
-      if c = 0 then
-        begin match f (Some d) with
-        | None -> merge l r
-        | Some data ->
-            if d == data then m else Node { l; v = x; d = data; r; h }
-        end
-      else if c < 0 then
-        let ll = update ~compare x f l in
-        if l == ll then m else bal ll v d r
-      else
-        let rr = update ~compare x f r in
-        if r == rr then m else bal l v d rr
+  | Node { l; v; d; r; h } as m -> (
+      match compare x v with
+      | Eq -> (
+          match f (Some d) with
+          | None -> merge l r
+          | Some data ->
+              if d == data then m else Node { l; v = x; d = data; r; h })
+      | Lt ->
+          let ll = update ~compare x f l in
+          if l == ll then m else bal ll v d r
+      | Gt ->
+          let rr = update ~compare x f r in
+          if r == rr then m else bal l v d rr)
 
 let add_to_list ~compare x data m =
   let add = function None -> Some [ data ] | Some l -> Some (data :: l) in
@@ -309,17 +316,17 @@ let concat t1 t2 =
 let concat_or_join t1 v d t2 =
   match d with Some d -> join t1 v d t2 | None -> concat t1 t2
 
-let rec split ~compare x = function
+let rec split ~(compare : _ compare) x = function
   | Empty -> (Empty, None, Empty)
-  | Node { l; v; d; r } ->
-      let c = compare x v in
-      if c = 0 then (l, Some d, r)
-      else if c < 0 then
-        let ll, pres, rl = split ~compare x l in
-        (ll, pres, join rl v d r)
-      else
-        let lr, pres, rr = split ~compare x r in
-        (join l v d lr, pres, rr)
+  | Node { l; v; d; r } -> (
+      match compare x v with
+      | Eq -> (l, Some d, r)
+      | Lt ->
+          let ll, pres, rl = split ~compare x l in
+          (ll, pres, join rl v d r)
+      | Gt ->
+          let lr, pres, rr = split ~compare x r in
+          (join l v d lr, pres, rr))
 
 let rec merge ~compare f s1 s2 =
   match (s1, s2) with
@@ -391,20 +398,21 @@ let rec cons_enum m e =
   | Empty -> e
   | Node { l; v; d; r } -> cons_enum l (More (v, d, r, e))
 
-let compare ~compare:cmp_key cmp m1 m2 =
+let compare ~compare:(cmp_key : _ compare) cmp m1 m2 =
   let rec compare_aux e1 e2 =
     match (e1, e2) with
-    | End, End -> 0
-    | End, _ -> -1
-    | _, End -> 1
-    | More (v1, d1, r1, e1), More (v2, d2, r2, e2) ->
-        let c = cmp_key v1 v2 in
-        if c <> 0 then c
-        else
-          let c = cmp d1 d2 in
-          if c <> 0 then c else compare_aux (cons_enum r1 e1) (cons_enum r2 e2)
+    | End, End -> Ordering.Eq
+    | End, _ -> Ordering.Lt
+    | _, End -> Ordering.Gt
+    | More (v1, d1, r1, e1), More (v2, d2, r2, e2) -> (
+        match cmp_key v1 v2 with
+        | (Lt | Gt) as res -> res
+        | Eq -> (
+            match Ordering.of_int (cmp d1 d2) with
+            | (Lt | Gt) as res -> res
+            | Eq -> compare_aux (cons_enum r1 e1) (cons_enum r2 e2)))
   in
-  compare_aux (cons_enum m1 End) (cons_enum m2 End)
+  Ordering.to_int (compare_aux (cons_enum m1 End) (cons_enum m2 End))
 
 let equal ~compare:cmp_key cmp m1 m2 =
   let rec equal_aux e1 e2 =
@@ -413,7 +421,7 @@ let equal ~compare:cmp_key cmp m1 m2 =
     | End, _ -> false
     | _, End -> false
     | More (v1, d1, r1, e1), More (v2, d2, r2, e2) ->
-        cmp_key v1 v2 = 0
+        Ordering.is_eq (cmp_key v1 v2)
         && cmp d1 d2
         && equal_aux (cons_enum r1 e1) (cons_enum r2 e2)
   in
@@ -460,15 +468,15 @@ let rec rev_seq_of_enum_ c () =
 
 let to_rev_seq c = rev_seq_of_enum_ (snoc_enum c End)
 
-let to_seq_from ~compare low m =
-  let rec aux ~compare low m c =
+let to_seq_from ~(compare : _ compare) low m =
+  let rec aux ~(compare : _ compare) low m c =
     match m with
     | Empty -> c
     | Node { l; v; d; r; _ } ->
         begin match compare v low with
-        | 0 -> More (v, d, r, c)
-        | n when n < 0 -> aux ~compare low r c
-        | _ -> aux ~compare low l (More (v, d, r, c))
+        | Eq -> More (v, d, r, c)
+        | Lt -> aux ~compare low r c
+        | Gt -> aux ~compare low l (More (v, d, r, c))
         end
   in
   seq_of_enum_ (aux ~compare low m End)

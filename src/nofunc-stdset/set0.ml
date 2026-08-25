@@ -1,6 +1,6 @@
 (***********************************************************************************)
 (*  nofunc-keyed: Keyed data structures adapted from OCaml Stdlib but no functors  *)
-(*  SPDX-FileCopyrightText: 2025 Mathieu Barbin <mathieu.barbin@gmail.com>         *)
+(*  SPDX-FileCopyrightText: 2025-2026 Mathieu Barbin <mathieu.barbin@gmail.com>    *)
 (*  SPDX-License-Identifier: LGPL-2.1-or-later WITH OCaml-LGPL-linking-exception   *)
 (***********************************************************************************)
 
@@ -10,28 +10,34 @@ module type OrderedType = sig
   val compare : t -> t -> int
 end
 
-module Tree = Nofunc_stdset_stdlib.Set0
+module Tree = Nofunc_set_stdlib.Set0
 
 type 'elt t =
-  { compare : 'elt Tree.compare
+  { compare_int : 'elt -> 'elt -> int
+  ; compare : 'elt Tree.compare
   ; tree : 'elt Tree.t
   }
 
 let empty (type elt) (module Ord : OrderedType with type t = elt) =
-  { compare = Ord.compare; tree = Tree.empty }
+  let compare a b = Ordering.of_int (Ord.compare a b) in
+  { compare_int = Ord.compare; compare; tree = Tree.empty }
 ;;
 
-let with_tree t tree = if t.tree == tree then t else { compare = t.compare; tree }
+let with_tree t tree =
+  if t.tree == tree then t else { compare_int = t.compare_int; compare = t.compare; tree }
+;;
+
 let add elt t = with_tree t (Tree.add ~compare:t.compare elt t.tree)
 
 let singleton (type elt) (module Ord : OrderedType with type t = elt) elt =
-  { compare = Ord.compare; tree = Tree.singleton elt }
+  let compare a b = Ordering.of_int (Ord.compare a b) in
+  { compare_int = Ord.compare; compare; tree = Tree.singleton elt }
 ;;
 
 let remove elt t = with_tree t (Tree.remove ~compare:t.compare elt t.tree)
 
 let check_same_compare t1 t2 ~fct =
-  if not (t1.compare == t2.compare)
+  if not (t1.compare_int == t2.compare_int)
   then invalid_arg (Printf.sprintf "Set.%s: sets have different compare functions." fct)
 ;;
 
@@ -42,12 +48,15 @@ let union t1 t2 =
   then t1
   else if t2.tree == res
   then t2
-  else { compare = t1.compare; tree = res }
+  else { compare_int = t1.compare_int; compare = t1.compare; tree = res }
 ;;
 
 let inter t1 t2 =
   check_same_compare t1 t2 ~fct:"inter";
-  { compare = t1.compare; tree = Tree.inter ~compare:t1.compare t1.tree t2.tree }
+  { compare_int = t1.compare_int
+  ; compare = t1.compare
+  ; tree = Tree.inter ~compare:t1.compare t1.tree t2.tree
+  }
 ;;
 
 let disjoint t1 t2 =
@@ -114,7 +123,8 @@ let exists f t = Tree.exists f t.tree
 let to_list t = Tree.to_list t.tree
 
 let of_list (type elt) (module Ord : OrderedType with type t = elt) l =
-  { compare = Ord.compare; tree = Tree.of_list ~compare:Ord.compare l }
+  let compare a b = Ordering.of_int (Ord.compare a b) in
+  { compare_int = Ord.compare; compare; tree = Tree.of_list ~compare l }
 ;;
 
 let to_seq_from elt t = Tree.to_seq_from ~compare:t.compare elt t.tree
@@ -123,5 +133,6 @@ let to_rev_seq t = Tree.to_rev_seq t.tree
 let add_seq seq t = with_tree t (Tree.add_seq ~compare:t.compare seq t.tree)
 
 let of_seq (type elt) (module Ord : OrderedType with type t = elt) seq =
-  { compare = Ord.compare; tree = Tree.of_seq ~compare:Ord.compare seq }
+  let compare a b = Ordering.of_int (Ord.compare a b) in
+  { compare_int = Ord.compare; compare; tree = Tree.of_seq ~compare seq }
 ;;
