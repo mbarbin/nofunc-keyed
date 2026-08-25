@@ -18,7 +18,12 @@
     keys and data. Require [(module HashedType)] (resp. SeededType) as first-class
     module argument everywhere needed.
 
-  - Label closures [~f], and the key and data of a binding [~key] and [~data]. *)
+  - Label closures [~f], and the key and data of a binding [~key] and [~data].
+
+  - Add a "Modular explicit usage" section, with a Base-style [M] functor and
+    [sexp_of_m__t] / [dyn_of_m__t] derivers requiring a [compare] function, used
+    to sort bindings before building the result, since iteration order is
+    unspecified. *)
 
 (**************************************************************************)
 (*                                                                        *)
@@ -255,3 +260,55 @@ val create : (module HashedType with type t = 'key) -> int -> ('key, 'a) t
 
 (** Same as {!of_seq_seeded} but never randomized. *)
 val of_seq : (module HashedType with type t = 'a) -> ('a * 'b) Seq.t -> ('a, 'b) t
+
+(** {1:modular Modular explicit usage}
+
+    The declarations below offer an alternative, module-based style for fixing
+    the key type at a single first-class module, in the tradition of Base's
+    [Hashtbl.M(Key).t]. They also provide ways to derive [sexp_of_t] and
+    [to_dyn] for a hash table, given a first-class module for the keys and a
+    converter for the data.
+
+    Since the iteration order of a hash table is unspecified, the first-class
+    module supplied to {!val:sexp_of_m__t} and {!val:dyn_of_m__t} is required to
+    provide a [compare] function, used to sort the bindings by key before
+    building the resulting value, so that the output is deterministic. *)
+
+module M (T : sig
+    type t
+  end) : sig
+  type nonrec 'a t = (T.t, 'a) t
+end
+
+(** Input signature for {!val:sexp_of_m__t}. *)
+module type Sexpable = sig
+  type t
+
+  val compare : t -> t -> Ordering.t
+  val sexp_of_t : t -> Sexplib0.Sexp.t
+end
+
+(** [sexp_of_m__t (module Key) sexp_of_data tbl] converts [tbl] to an
+    s-expression, representing each binding as a two-element list of the key
+    and data s-expressions, sorted by [Key.compare]. *)
+val sexp_of_m__t
+  :  (module Sexpable with type t = 'key)
+  -> ('data -> Sexplib0.Sexp.t)
+  -> ('key, 'data) t
+  -> Sexplib0.Sexp.t
+
+(** Input signature for {!val:dyn_of_m__t}. *)
+module type Dynable = sig
+  type t
+
+  val compare : t -> t -> Ordering.t
+  val to_dyn : t -> Dyn.t
+end
+
+(** [dyn_of_m__t (module Key) data_to_dyn tbl] converts [tbl] to a [Dyn.t],
+    built the same way as {!val:sexp_of_m__t}. *)
+val dyn_of_m__t
+  :  (module Dynable with type t = 'key)
+  -> ('data -> Dyn.t)
+  -> ('key, 'data) t
+  -> Dyn.t

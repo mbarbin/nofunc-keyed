@@ -252,3 +252,21 @@ let%expect_test "different compare functions" =
   [%expect {| Invalid_argument("Map.merge: maps have different compare functions.") |}];
   ()
 ;;
+
+module Key = struct
+  include Int
+
+  let sexp_of_t = Sexplib0.Sexp_conv.sexp_of_int
+  let to_dyn = Dyn.int
+end
+
+let%expect_test "M / sexp_of_m__t / dyn_of_m__t" =
+  (* [Map.M(Key).t] fixes the key type, leaving only the data type as a
+     parameter, as illustrated by this type annotation. *)
+  let m : string Map.M(Key).t = Map.of_list (module Key) [ 2, "two"; 1, "one" ] in
+  print_s (Map.sexp_of_m__t (module Key) Sexplib0.Sexp_conv.sexp_of_string m);
+  [%expect {| ((1 one) (2 two)) |}];
+  print_dyn (Map.dyn_of_m__t (module Key) Dyn.string m);
+  [%expect {| map { 1 : "one"; 2 : "two" } |}];
+  ()
+;;

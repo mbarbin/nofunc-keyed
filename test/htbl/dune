@@ -1,6 +1,6 @@
 (library
  (name htbl_test)
- (package nofunc-keyed-dev)
+ (package nofunc-keyed-tests)
  (inline_tests)
  (flags
   :standard
@@ -10,7 +10,7 @@
   +a
   -open
   Nofunc_stdlib)
- (libraries nofunc-htbl nofunc_stdlib)
+ (libraries nofunc-htbl nofunc_stdlib ordering sexplib0)
  (instrumentation
   (backend bisect_ppx))
  (preprocess

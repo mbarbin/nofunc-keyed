@@ -1,6 +1,6 @@
 (library
  (name nofunc_hset)
  (public_name nofunc-hset)
- (libraries nofunc-htbl)
+ (libraries dyn nofunc-htbl ordering sexplib0)
  (instrumentation
   (backend bisect_ppx)))

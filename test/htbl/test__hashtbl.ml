@@ -132,3 +132,27 @@ let%expect_test "create_seeded / of_seq_seeded" =
   [%expect {| [ (2, "two"); (3, "three") ] |}];
   ()
 ;;
+
+module Key = struct
+  include Int
+
+  let compare a b = Ordering.of_int (Int.compare a b)
+  let sexp_of_t = Sexplib0.Sexp_conv.sexp_of_int
+end
+
+let%expect_test "M / sexp_of_m__t / dyn_of_m__t" =
+  (* [Hashtbl.M(Key).t] fixes the key type, leaving only the data type as a
+     parameter, as illustrated by this type annotation. *)
+  let tbl : string Hashtbl.M(Key).t = Hashtbl.create (module Key) 16 in
+  Hashtbl.replace tbl ~key:3 ~data:"three";
+  Hashtbl.replace tbl ~key:1 ~data:"one";
+  Hashtbl.replace tbl ~key:2 ~data:"two";
+  (* Iteration order of a hash table is unspecified; [sexp_of_m__t] and
+     [dyn_of_m__t] sort the bindings by [Key.compare] so that the output below
+     is deterministic. *)
+  print_s (Hashtbl.sexp_of_m__t (module Key) Sexplib0.Sexp_conv.sexp_of_string tbl);
+  [%expect {| ((1 one) (2 two) (3 three)) |}];
+  print_dyn (Hashtbl.dyn_of_m__t (module Key) Dyn.string tbl);
+  [%expect {| map { 1 : "one"; 2 : "two"; 3 : "three" } |}];
+  ()
+;;

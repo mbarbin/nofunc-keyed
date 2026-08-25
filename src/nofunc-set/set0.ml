@@ -125,3 +125,30 @@ let add_seq t seq = with_tree t (Tree.add_seq ~compare:t.compare seq t.tree)
 let of_seq (type elt) (module Ord : OrderedType with type t = elt) seq =
   { compare = Ord.compare; tree = Tree.of_seq ~compare:Ord.compare seq }
 ;;
+
+module M (T : sig
+    type t
+  end) =
+struct
+  type nonrec t = T.t t
+end
+
+module type Sexpable = sig
+  type t
+
+  val sexp_of_t : t -> Sexplib0.Sexp.t
+end
+
+let sexp_of_m__t (type elt) (module T : Sexpable with type t = elt) t =
+  Sexplib0.Sexp.List (to_list t |> List.map T.sexp_of_t)
+;;
+
+module type Dynable = sig
+  type t
+
+  val to_dyn : t -> Dyn.t
+end
+
+let dyn_of_m__t (type elt) (module T : Dynable with type t = elt) t =
+  Dyn.Set (to_list t |> List.map T.to_dyn)
+;;

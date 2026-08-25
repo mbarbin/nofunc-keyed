@@ -93,3 +93,27 @@ let%expect_test "create_seeded / of_seq_seeded" =
   [%expect {| [ 2; 3 ] |}];
   ()
 ;;
+
+module Key = struct
+  include Int
+
+  let compare a b = Ordering.of_int (Int.compare a b)
+  let sexp_of_t = Sexplib0.Sexp_conv.sexp_of_int
+end
+
+let%expect_test "M / sexp_of_m__t / dyn_of_m__t" =
+  (* [Hashset.M(Key).t] fixes the element type, with no remaining type
+     parameter, as illustrated by this type annotation. *)
+  let set : Hashset.M(Key).t = Hashset.create (module Key) 16 in
+  Hashset.add set 3;
+  Hashset.add set 1;
+  Hashset.add set 2;
+  (* Iteration order of a hash set is unspecified; [sexp_of_m__t] and
+     [dyn_of_m__t] sort the elements by [Key.compare] so that the output below
+     is deterministic. *)
+  print_s (Hashset.sexp_of_m__t (module Key) set);
+  [%expect {| (1 2 3) |}];
+  print_dyn (Hashset.dyn_of_m__t (module Key) set);
+  [%expect {| set { 1; 2; 3 } |}];
+  ()
+;;

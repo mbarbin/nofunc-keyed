@@ -29,15 +29,27 @@
  (depends
   (ocaml
    (>= 5.2))
+  (dyn
+   (>= 3.20))
   (nofunc-htbl
-   (= :version))))
+   (= :version))
+  (ordering
+   (>= 3.20))
+  (sexplib0
+   (>= v0.16))))
 
 (package
  (name nofunc-htbl)
  (synopsis "Hashtbl with an opinionated nofunc API (non-std)")
  (depends
   (ocaml
-   (>= 5.2))))
+   (>= 5.2))
+  (dyn
+   (>= 3.20))
+  (ordering
+   (>= 3.20))
+  (sexplib0
+   (>= v0.16))))
 
 (package
  (name nofunc-map)
@@ -45,8 +57,12 @@
  (depends
   (ocaml
    (>= 4.14))
+  (dyn
+   (>= 3.20))
   (ordering
-   (>= 3.20))))
+   (>= 3.20))
+  (sexplib0
+   (>= v0.16))))
 
 (package
  (name nofunc-set)
@@ -54,8 +70,12 @@
  (depends
   (ocaml
    (>= 4.14))
+  (dyn
+   (>= 3.20))
   (ordering
-   (>= 3.20))))
+   (>= 3.20))
+  (sexplib0
+   (>= v0.16))))
 
 (package
  (name nofunc-stdhset)
@@ -98,16 +118,11 @@
    (>= 3.20))))
 
 (package
- (name nofunc-keyed-dev)
- (synopsis "Package to regroup dev targets, documentation, and more")
- (allow_empty)
+ (name nofunc-keyed-tests)
+ (synopsis "Tests for nofunc-keyed")
  (depends
   (ocaml
    (>= 5.2))
-  (ocamlformat
-   (= 0.29.0))
-  (bisect_ppx
-   (>= 2.8.3))
   (dyn
    (>= 3.20))
   (nofunc-hset
@@ -132,5 +147,39 @@
    (>= 2.0.0))
   (ppx_expect
    (>= v0.17))
+  (ppx_sexp_conv
+   (>= v0.17))
+  (sexplib0
+   (>= v0.16))))
+
+(package
+ (name nofunc-keyed-dev)
+ (synopsis "Package to regroup dev targets, documentation, and more")
+ (allow_empty)
+ (depends
+  (ocaml
+   (>= 5.2))
+  (ocamlformat
+   (= 0.29.0))
+  (bisect_ppx
+   (>= 2.8.3))
+  (nofunc-hset
+   (= :version))
+  (nofunc-htbl
+   (= :version))
+  (nofunc-keyed-tests
+   (= :version))
+  (nofunc-map
+   (= :version))
+  (nofunc-set
+   (= :version))
+  (nofunc-stdhset
+   (= :version))
+  (nofunc-stdhtbl
+   (= :version))
+  (nofunc-stdmap
+   (= :version))
+  (nofunc-stdset
+   (= :version))
   (sherlodoc
    (>= 0.2))))

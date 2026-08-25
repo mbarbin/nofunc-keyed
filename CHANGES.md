@@ -1,3 +1,9 @@
+## Unreleased
+
+### Changed
+
+- Moved `test/` from `nofunc-keyed-dev` to a new dedicated `nofunc-keyed-tests` package (@mbarbin).
+
 ## 0.1.0 (2026-02-19)
 
 This initial release includes only the `std` flavor of the distribution with other variants left as future work.

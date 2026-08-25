@@ -10,7 +10,10 @@ bug-reports: "https://github.com/mbarbin/nofunc-keyed/issues"
 depends: [
   "dune" {>= "3.20"}
   "ocaml" {>= "5.2"}
+  "dyn" {>= "3.20"}
   "nofunc-htbl" {= version}
+  "ordering" {>= "3.20"}
+  "sexplib0" {>= "v0.16"}
   "odoc" {with-doc}
 ]
 build: [

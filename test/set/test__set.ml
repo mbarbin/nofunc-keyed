@@ -213,3 +213,21 @@ let%expect_test "different compare functions" =
   [%expect {| Invalid_argument("Set.union: sets have different compare functions.") |}];
   ()
 ;;
+
+module Key = struct
+  include Int
+
+  let sexp_of_t = Sexplib0.Sexp_conv.sexp_of_int
+  let to_dyn = Dyn.int
+end
+
+let%expect_test "M / sexp_of_m__t / dyn_of_m__t" =
+  (* [Set.M(Key).t] fixes the element type, with no remaining type parameter,
+     as illustrated by this type annotation. *)
+  let s : Set.M(Key).t = Set.of_list (module Key) [ 2; 1 ] in
+  print_s (Set.sexp_of_m__t (module Key) s);
+  [%expect {| (1 2) |}];
+  print_dyn (Set.dyn_of_m__t (module Key) s);
+  [%expect {| set { 1; 2 } |}];
+  ()
+;;

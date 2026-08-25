@@ -5,8 +5,10 @@
 (*_**********************************************************************************)
 
 module Dyn = Dyn
+module Sexp = Sexplib0.Sexp
 
 val print_dyn : Dyn.t -> unit
+val print_s : Sexp.t -> unit
 val phys_equal : 'a -> 'a -> bool
 val require : bool -> unit
 val require_does_raise : (unit -> 'a) -> unit
