@@ -14,6 +14,7 @@
 - In `Set` and `Hashset` (the non-`std` packages), `fold`'s callback now labels the element `~elt` instead of `~key` - these are element containers, not key/value ones, so `key` didn't fit (@mbarbin).
 - In `Set`, `Map`, `Hashtbl` and `Hashset` (the non-`std` packages), `fold`'s accumulator is now labeled `~init` instead of positional - it was an oversight that it wasn't, unlike every other optional-looking argument in this API (@mbarbin).
 - Moved `test/` from `nofunc-keyed-dev` to a new dedicated `nofunc-keyed-tests` package (@mbarbin).
+- `Map.equal` and `Map.compare` (the non-`std` package) now take their comparison function as an unlabeled first argument, matching the convention used by the `std` package and the OCaml stdlib, instead of a trailing `~f:(left:'a -> right:'a -> ...)` (@mbarbin).
 
 ### Fixed
 

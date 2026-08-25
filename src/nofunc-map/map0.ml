@@ -111,17 +111,17 @@ let is_empty t = Tree.is_empty t.tree
 let is_singleton t = Tree.is_singleton t.tree
 let mem t key = Tree.mem ~compare:t.compare key t.tree
 
-let equal t1 t2 ~f =
+let equal f t1 t2 =
   check_same_compare t1 t2 ~fct:"equal";
-  Tree.equal ~compare:t1.compare (fun left right -> f ~left ~right) t1.tree t2.tree
+  Tree.equal ~compare:t1.compare f t1.tree t2.tree
 ;;
 
-let compare t1 t2 ~f =
+let compare f t1 t2 =
   check_same_compare t1 t2 ~fct:"compare";
   Ordering.of_int
     (Tree.compare
        ~compare:t1.compare
-       (fun left right -> Ordering.to_int (f ~left ~right))
+       (fun left right -> Ordering.to_int (f left right))
        t1.tree
        t2.tree)
 ;;

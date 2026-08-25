@@ -210,13 +210,12 @@ let%expect_test "equal / compare" =
   let m1 = Map.of_list (module Int) [ 1, "one"; 2, "two" ] in
   let m2 = Map.of_list (module Int) [ 1, "one"; 2, "two" ] in
   let m3 = Map.of_list (module Int) [ 1, "one"; 2, "TWO" ] in
-  print_dyn (Map.equal m1 m2 ~f:(fun ~left ~right -> String.equal left right) |> Dyn.bool);
+  print_dyn (Map.equal String.equal m1 m2 |> Dyn.bool);
   [%expect {| true |}];
-  print_dyn (Map.equal m1 m3 ~f:(fun ~left ~right -> String.equal left right) |> Dyn.bool);
+  print_dyn (Map.equal String.equal m1 m3 |> Dyn.bool);
   [%expect {| false |}];
   print_dyn
-    (Map.compare m1 m2 ~f:(fun ~left ~right ->
-       Ordering.of_int (String.compare left right))
+    (Map.compare (fun left right -> Ordering.of_int (String.compare left right)) m1 m2
      |> Ordering.to_string
      |> Dyn.string);
   [%expect {| "=" |}];

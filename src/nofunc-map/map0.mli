@@ -291,24 +291,17 @@ val is_singleton : _ t -> bool
     otherwise. *)
 val mem : ('key, _) t -> 'key -> bool
 
-(** [equal m1 m2 ~f] tests whether the maps [m1] and [m2] are equal, that is,
-    contain equal keys and associate them with equal data. [f] is the equality
-    predicate used to compare the data associated with the keys. [left] and
-    [right] are labeled to avoid mixing up which map each value comes from,
-    especially since both have the same type. Raise [Invalid_argument] if the
-    maps have different compare functions. *)
-val equal : ('key, 'a) t -> ('key, 'a) t -> f:(left:'a -> right:'a -> bool) -> bool
+(** [equal cmp m1 m2] tests whether the maps [m1] and [m2] are equal, that is,
+    contain equal keys and associate them with equal data. [cmp] is the
+    equality predicate used to compare the data associated with the keys.
+    Raise [Invalid_argument] if the maps have different compare functions. *)
+val equal : ('a -> 'a -> bool) -> ('key, 'a) t -> ('key, 'a) t -> bool
 
-(** Total ordering between maps. [f] is a total ordering used to compare data
-    associated with equal keys in the two maps. [left] and [right] are labeled
-    to avoid mixing up which map each value comes from, especially since both
-    have the same type. Raise [Invalid_argument] if the maps have different
-    compare functions. *)
-val compare
-  :  ('key, 'a) t
-  -> ('key, 'a) t
-  -> f:(left:'a -> right:'a -> Ordering.t)
-  -> Ordering.t
+(** [compare cmp m1 m2] is a total ordering between maps. [cmp] is a total
+    ordering used to compare data associated with equal keys in the two
+    maps. Raise [Invalid_argument] if the maps have different compare
+    functions. *)
+val compare : ('a -> 'a -> Ordering.t) -> ('key, 'a) t -> ('key, 'a) t -> Ordering.t
 
 (** [for_all m ~f] checks if all the bindings of the map satisfy the predicate
     [f]. [key] and [data] are labeled to avoid mixing them up. *)
