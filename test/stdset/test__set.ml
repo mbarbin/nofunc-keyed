@@ -65,6 +65,13 @@ let%expect_test "of_list" =
   ()
 ;;
 
+let%expect_test "of_list []" =
+  let s = Set.of_list (module Int) [] in
+  require (Set.is_empty s);
+  [%expect {||}];
+  ()
+;;
+
 let%expect_test "elements / to_list" =
   let s = Set.of_list (module Int) [ 3; 1; 2 ] in
   print_dyn (Set.elements s |> Dyn.list Dyn.int);
@@ -92,6 +99,10 @@ let%expect_test "find / find_opt" =
   print_dyn (Set.find_opt 2 s |> Dyn.option Dyn.int);
   [%expect {| Some 2 |}];
   print_dyn (Set.find_opt 4 s |> Dyn.option Dyn.int);
+  [%expect {| None |}];
+  (* A value smaller than every element in [s] exercises find_opt's
+     recursion into the left subtree. *)
+  print_dyn (Set.find_opt 0 s |> Dyn.option Dyn.int);
   [%expect {| None |}];
   ()
 ;;
@@ -488,6 +499,19 @@ let%expect_test "filter_map - removing elements" =
   ()
 ;;
 
+let%expect_test "filter_map - try_concat with a non-empty left and an empty right" =
+  (* [of_list] on 7 sorted elements builds root=4, left subtree=(2, l=1, r=3),
+     right subtree=(6, l=5, r=7). Dropping 2 (its own node) and 3 (its right
+     child) while keeping 1 (its left child) forces filter_map's
+     [try_concat] to combine a non-empty left tree with an empty right
+     tree, exercising that specific case. *)
+  let s = Set.of_list (module Int) [ 1; 2; 3; 4; 5; 6; 7 ] in
+  let s2 = Set.filter_map (fun x -> if x = 2 || x = 3 then None else Some x) s in
+  print_set s2;
+  [%expect {| [ 1; 4; 5; 6; 7 ] |}];
+  ()
+;;
+
 let%expect_test "inter - disjoint sets" =
   let s1 = Set.of_list (module Int) [ 1; 2; 3 ] in
   let s2 = Set.of_list (module Int) [ 4; 5; 6 ] in
@@ -718,6 +742,28 @@ let%expect_test "join - rebalancing paths" =
   let u2 = Set.union small big in
   print_dyn (Set.cardinal u2 |> Dyn.int);
   [%expect {| 32 |}];
+  ()
+;;
+
+let%expect_test "filter - join with a much taller left result than right" =
+  (* Keeping a large contiguous low range plus a small high range means
+     that, once the (dropped) boundary is reached, filter's [join] combines
+     a much taller "kept low" subtree with a short "kept high" one -
+     exercising join's lh > rh + 2 rebalancing case. *)
+  let s = Set.of_list (module Int) (List.init 1000 (fun i -> i)) in
+  let s2 = Set.filter (fun x -> x < 500 || x >= 990) s in
+  print_dyn (Set.cardinal s2 |> Dyn.int);
+  [%expect {| 510 |}];
+  ()
+;;
+
+let%expect_test "filter - join with a much taller right result than left" =
+  (* Mirror of the above: a small low range plus a large high range
+     exercises join's rh > lh + 2 rebalancing case. *)
+  let s = Set.of_list (module Int) (List.init 1000 (fun i -> i)) in
+  let s2 = Set.filter (fun x -> x < 10 || x >= 500) s in
+  print_dyn (Set.cardinal s2 |> Dyn.int);
+  [%expect {| 510 |}];
   ()
 ;;
 
