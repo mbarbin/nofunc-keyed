@@ -178,6 +178,13 @@ val find_and_remove :
 (** Same as {!remove} but returns the previous binding, if any.
     @since 5.5 *)
 
+val remove_all :
+  equal:'a equal -> seeded_hash:'a seeded_hash -> ('a, 'b) t -> 'a -> unit
+(** [Hashtbl.remove_all tbl x] removes every binding of [x] in [tbl] at once,
+    including any hidden by {!add}. Does nothing if [x] is not bound in [tbl].
+    Unlike calling {!remove} repeatedly, this hashes [x] only once and walks the
+    bucket it lands in a single pass. Not part of the upstream OCaml Stdlib. *)
+
 val replace :
   equal:'a equal -> seeded_hash:'a seeded_hash -> ('a, 'b) t -> 'a -> 'b -> unit
 (** [Hashtbl.replace tbl key data] replaces the current binding of [key] in

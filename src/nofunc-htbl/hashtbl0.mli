@@ -113,12 +113,21 @@ val find_all : ('a, 'b) t -> 'a -> 'b list
 val mem : ('a, 'b) t -> 'a -> bool
 
 (** [remove tbl key] removes the current binding of [key] in [tbl], restoring
-    the previous binding if it exists. It does nothing if [key] is not bound in
-    [tbl]. *)
+    the previous binding if it exists (see {!shadow}). It does nothing if
+    [key] is not bound in [tbl]. If [key] was only ever bound via {!set}
+    (never {!shadow}), it has at most one binding and this clears it
+    entirely; otherwise, see {!remove_all} to clear every binding of [key]
+    at once. *)
 val remove : ('a, 'b) t -> 'a -> unit
 
 (** Same as {!remove} but returns the previous binding, if any. *)
 val find_and_remove : ('a, 'b) t -> 'a -> 'b option
+
+(** [remove_all tbl key] removes every binding of [key] in [tbl], including
+    any shadowed by {!shadow}, so that {!mem}[ tbl key] is [false] afterwards.
+    Same as calling {!remove} repeatedly until [key] is no longer bound. Does
+    nothing if [key] is not bound in [tbl]. *)
+val remove_all : ('a, 'b) t -> 'a -> unit
 
 (** [set tbl ~key ~data] replaces the current binding of [key] in [tbl] by a
     binding of [key] to [data]. If [key] is unbound in [tbl], a binding of [key]

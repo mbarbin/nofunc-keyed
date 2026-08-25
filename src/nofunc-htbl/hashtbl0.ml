@@ -29,6 +29,8 @@ let find_and_remove t key =
   Tbl.find_and_remove ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
 ;;
 
+let remove_all t key = Tbl.remove_all ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key
+
 let set t ~key ~data =
   Tbl.replace ~equal:t.equal ~seeded_hash:t.seeded_hash t.tbl key data
 ;;

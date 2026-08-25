@@ -69,6 +69,30 @@ let%expect_test "shadow: multiple bindings for the same key, retrieved with find
   ()
 ;;
 
+let%expect_test "remove_all: clears every shadowed binding for a key at once" =
+  let tbl = Hashtbl.create (module Int) 16 in
+  Hashtbl.shadow tbl ~key:1 ~data:"first";
+  Hashtbl.shadow tbl ~key:1 ~data:"second";
+  Hashtbl.shadow tbl ~key:1 ~data:"third";
+  Hashtbl.set tbl ~key:2 ~data:"two";
+  print_dyn (Hashtbl.length tbl |> Dyn.int);
+  [%expect {| 4 |}];
+  (* One call to [remove_all] does the work of three [remove]s, and leaves
+     other keys untouched. *)
+  Hashtbl.remove_all tbl 1;
+  print_dyn (Hashtbl.find_all tbl 1 |> Dyn.list Dyn.string);
+  [%expect {| [] |}];
+  print_dyn (Hashtbl.mem tbl 1 |> Dyn.bool);
+  [%expect {| false |}];
+  print_bindings tbl;
+  [%expect {| [ (2, "two") ] |}];
+  (* Does nothing if [key] isn't bound. *)
+  Hashtbl.remove_all tbl 1;
+  print_dyn (Hashtbl.length tbl |> Dyn.int);
+  [%expect {| 1 |}];
+  ()
+;;
+
 let%expect_test "set / find_and_replace / find_and_remove / remove" =
   let tbl = Hashtbl.create (module Int) 16 in
   Hashtbl.set tbl ~key:1 ~data:"one";
