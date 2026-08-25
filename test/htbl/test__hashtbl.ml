@@ -1,0 +1,133 @@
+(***********************************************************************************)
+(*  nofunc-keyed: Keyed data structures adapted from OCaml Stdlib but no functors  *)
+(*  SPDX-FileCopyrightText: 2025 Mathieu Barbin <mathieu.barbin@gmail.com>         *)
+(*  SPDX-License-Identifier: LGPL-2.1-or-later WITH OCaml-LGPL-linking-exception   *)
+(***********************************************************************************)
+
+(* [Nofunc_htbl.Hashtbl] is a thin wrapper around [Nofunc_htbl.stdlib]'s
+   [Hashtbl0], which is exercised thoroughly by the [stdhtbl] test suite (the
+   same building block is shared by both packages). Here we only need to
+   exercise each function of the wrapper itself. *)
+
+module Hashtbl = Nofunc_htbl.Hashtbl
+
+let sorted_bindings tbl =
+  Hashtbl.fold (fun k v acc -> (k, v) :: acc) tbl []
+  |> List.sort (fun (k1, _) (k2, _) -> Int.compare k1 k2)
+;;
+
+let print_bindings tbl =
+  print_dyn (sorted_bindings tbl |> Dyn.list (Dyn.pair Dyn.int Dyn.string))
+;;
+
+let%expect_test "create / length / add / find / find_opt / find_all / mem" =
+  let tbl = Hashtbl.create (module Int) 16 in
+  Hashtbl.add tbl 1 "one";
+  Hashtbl.add tbl 1 "ONE";
+  print_dyn (Hashtbl.length tbl |> Dyn.int);
+  [%expect {| 2 |}];
+  print_dyn (Hashtbl.find tbl 1 |> Dyn.string);
+  [%expect {| "ONE" |}];
+  print_dyn (Hashtbl.find_opt tbl 1 |> Dyn.option Dyn.string);
+  [%expect {| Some "ONE" |}];
+  print_dyn (Hashtbl.find_all tbl 1 |> Dyn.list Dyn.string);
+  [%expect {| [ "ONE"; "one" ] |}];
+  print_dyn (Hashtbl.mem tbl 1 |> Dyn.bool);
+  [%expect {| true |}];
+  ()
+;;
+
+let%expect_test "replace / find_and_replace / find_and_remove / remove" =
+  let tbl = Hashtbl.create (module Int) 16 in
+  Hashtbl.replace tbl 1 "one";
+  Hashtbl.replace tbl 2 "two";
+  print_dyn (Hashtbl.find_and_replace tbl 1 "ONE" |> Dyn.option Dyn.string);
+  [%expect {| Some "one" |}];
+  print_dyn (Hashtbl.find_and_remove tbl 2 |> Dyn.option Dyn.string);
+  [%expect {| Some "two" |}];
+  Hashtbl.remove tbl 1;
+  print_dyn (Hashtbl.length tbl |> Dyn.int);
+  [%expect {| 0 |}];
+  ()
+;;
+
+let%expect_test "iter / fold / filter_map_inplace" =
+  let tbl = Hashtbl.create (module Int) 16 in
+  Hashtbl.replace tbl 1 "one";
+  Hashtbl.replace tbl 2 "two";
+  let count = ref 0 in
+  Hashtbl.iter (fun _ _ -> incr count) tbl;
+  print_dyn (!count |> Dyn.int);
+  [%expect {| 2 |}];
+  let sum = Hashtbl.fold (fun k _ acc -> acc + k) tbl 0 in
+  print_dyn (sum |> Dyn.int);
+  [%expect {| 3 |}];
+  Hashtbl.filter_map_inplace (fun k v -> if k = 1 then Some v else None) tbl;
+  print_bindings tbl;
+  [%expect {| [ (1, "one") ] |}];
+  ()
+;;
+
+let%expect_test "clear / reset / copy" =
+  let tbl = Hashtbl.create (module Int) 16 in
+  Hashtbl.replace tbl 1 "one";
+  let tbl2 = Hashtbl.copy tbl in
+  Hashtbl.replace tbl2 2 "two";
+  print_dyn (Hashtbl.length tbl |> Dyn.int);
+  [%expect {| 1 |}];
+  print_dyn (Hashtbl.length tbl2 |> Dyn.int);
+  [%expect {| 2 |}];
+  Hashtbl.clear tbl;
+  print_dyn (Hashtbl.length tbl |> Dyn.int);
+  [%expect {| 0 |}];
+  Hashtbl.reset tbl2;
+  print_dyn (Hashtbl.length tbl2 |> Dyn.int);
+  [%expect {| 0 |}];
+  ()
+;;
+
+let%expect_test "stats / to_seq / to_seq_keys / to_seq_values" =
+  let tbl = Hashtbl.create (module Int) 16 in
+  Hashtbl.replace tbl 1 "one";
+  Hashtbl.replace tbl 2 "two";
+  let stats = Hashtbl.stats tbl in
+  require (stats.num_buckets > 0);
+  [%expect {||}];
+  let sorted_keys s = s |> List.of_seq |> List.sort Int.compare in
+  print_dyn (Hashtbl.to_seq tbl |> List.of_seq |> List.length |> Dyn.int);
+  [%expect {| 2 |}];
+  print_dyn (Hashtbl.to_seq_keys tbl |> sorted_keys |> Dyn.list Dyn.int);
+  [%expect {| [ 1; 2 ] |}];
+  print_dyn
+    (Hashtbl.to_seq_values tbl
+     |> List.of_seq
+     |> List.sort String.compare
+     |> Dyn.list Dyn.string);
+  [%expect {| [ "one"; "two" ] |}];
+  ()
+;;
+
+let%expect_test "add_seq / replace_seq / of_seq" =
+  let tbl = Hashtbl.create (module Int) 16 in
+  Hashtbl.add_seq tbl (List.to_seq [ 1, "one"; 2, "two" ]);
+  print_bindings tbl;
+  [%expect {| [ (1, "one"); (2, "two") ] |}];
+  Hashtbl.replace_seq tbl (List.to_seq [ 1, "ONE" ]);
+  print_bindings tbl;
+  [%expect {| [ (1, "ONE"); (2, "two") ] |}];
+  let tbl2 = Hashtbl.of_seq (module Int) (List.to_seq [ 3, "three"; 4, "four" ]) in
+  print_bindings tbl2;
+  [%expect {| [ (3, "three"); (4, "four") ] |}];
+  ()
+;;
+
+let%expect_test "create_seeded / of_seq_seeded" =
+  let tbl = Hashtbl.create_seeded (module Int) 16 in
+  Hashtbl.replace tbl 1 "one";
+  print_bindings tbl;
+  [%expect {| [ (1, "one") ] |}];
+  let tbl2 = Hashtbl.of_seq_seeded (module Int) (List.to_seq [ 2, "two"; 3, "three" ]) in
+  print_bindings tbl2;
+  [%expect {| [ (2, "two"); (3, "three") ] |}];
+  ()
+;;
