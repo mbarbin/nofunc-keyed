@@ -4,7 +4,7 @@
 (*  SPDX-License-Identifier: LGPL-2.1-or-later WITH OCaml-LGPL-linking-exception   *)
 (***********************************************************************************)
 
-module Hashtbl = Nofunc_stdhtbl.Hashtbl
+module Hashtbl = Nofunc_htbl.Hashtbl
 
 type !'a t = ('a, unit) Hashtbl.t
 
