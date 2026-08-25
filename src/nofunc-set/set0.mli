@@ -54,9 +54,7 @@ module type OrderedType = sig
   (** The type of the set elements. *)
   type t
 
-  (** A total ordering function over the set elements. An ordering function
-      derived from an existing [int]-returning comparator (for example,
-      [Stdlib.compare]) can be built with [Ordering.of_int]. *)
+  (** A total ordering function over the set elements. *)
   val compare : t -> t -> Ordering.t
 end
 

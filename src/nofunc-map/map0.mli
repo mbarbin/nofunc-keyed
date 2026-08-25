@@ -57,9 +57,7 @@ module type OrderedType = sig
   (** A total ordering function over the keys. This is a two-argument function
       [f] such that [f e1 e2] is [Ordering.Eq] if the keys [e1] and [e2] are
       equal, [f e1 e2] is [Ordering.Lt] if [e1] is smaller than [e2], and
-      [f e1 e2] is [Ordering.Gt] if [e1] is greater than [e2]. An ordering
-      function derived from an existing [int]-returning comparator (for
-      example, [Stdlib.compare]) can be built with [Ordering.of_int]. *)
+      [f e1 e2] is [Ordering.Gt] if [e1] is greater than [e2]. *)
   val compare : t -> t -> Ordering.t
 end
 
