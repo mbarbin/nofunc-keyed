@@ -21,7 +21,7 @@ depends: [
   "nofunc-stdhtbl" {= version}
   "nofunc-stdmap" {= version}
   "nofunc-stdset" {= version}
-  "sherlodoc" {>= "0.2"}
+  "ppx_js_style" {>= "v0.17"}
   "odoc" {with-doc}
 ]
 build: [
