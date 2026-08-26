@@ -6,25 +6,35 @@
 
 module type OrderedType = sig
   type t
+  type comparator_witness
 
   val compare : t -> t -> Ordering.t
 end
 
 module Tree = Nofunc_set_stdlib.Set0
 
-type 'elt t =
+type ('elt, 'cmp) t =
   { compare : 'elt Tree.compare
   ; tree : 'elt Tree.t
   }
 
-let empty (type elt) (module Ord : OrderedType with type t = elt) =
+let empty
+      (type elt cmp)
+      (module Ord : OrderedType with type t = elt and type comparator_witness = cmp)
+  : (elt, cmp) t
+  =
   { compare = Ord.compare; tree = Tree.empty }
 ;;
 
 let with_tree t tree = if t.tree == tree then t else { compare = t.compare; tree }
 let add t elt = with_tree t (Tree.add ~compare:t.compare elt t.tree)
 
-let singleton (type elt) (module Ord : OrderedType with type t = elt) elt =
+let singleton
+      (type elt cmp)
+      (module Ord : OrderedType with type t = elt and type comparator_witness = cmp)
+      elt
+  : (elt, cmp) t
+  =
   { compare = Ord.compare; tree = Tree.singleton elt }
 ;;
 
@@ -113,7 +123,12 @@ let for_all t ~f = Tree.for_all f t.tree
 let exists t ~f = Tree.exists f t.tree
 let to_list t = Tree.to_list t.tree
 
-let of_list (type elt) (module Ord : OrderedType with type t = elt) l =
+let of_list
+      (type elt cmp)
+      (module Ord : OrderedType with type t = elt and type comparator_witness = cmp)
+      l
+  : (elt, cmp) t
+  =
   { compare = Ord.compare; tree = Tree.of_list ~compare:Ord.compare l }
 ;;
 
@@ -122,15 +137,21 @@ let to_seq t = Tree.to_seq t.tree
 let to_rev_seq t = Tree.to_rev_seq t.tree
 let add_seq t seq = with_tree t (Tree.add_seq ~compare:t.compare seq t.tree)
 
-let of_seq (type elt) (module Ord : OrderedType with type t = elt) seq =
+let of_seq
+      (type elt cmp)
+      (module Ord : OrderedType with type t = elt and type comparator_witness = cmp)
+      seq
+  : (elt, cmp) t
+  =
   { compare = Ord.compare; tree = Tree.of_seq ~compare:Ord.compare seq }
 ;;
 
 module M (T : sig
     type t
+    type comparator_witness
   end) =
 struct
-  type nonrec t = T.t t
+  type nonrec t = (T.t, T.comparator_witness) t
 end
 
 module type Sexpable = sig

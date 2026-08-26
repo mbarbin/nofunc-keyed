@@ -22,6 +22,7 @@ open Sexplib0.Sexp_conv
 
 module Int_key = struct
   type t = int
+  type comparator_witness
 
   let equal = Int.equal
   let hash = Stdlib.Hashtbl.hash
@@ -32,6 +33,7 @@ end
 
 module String_key = struct
   type t = string
+  type comparator_witness
 
   let equal = String.equal
   let hash = Stdlib.Hashtbl.hash
