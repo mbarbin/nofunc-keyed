@@ -12,7 +12,7 @@ end
 
 module Tree = Nofunc_map_stdlib.Map0
 
-type ('key, !+'a) t =
+type (!'key, !+'a) t =
   { compare_int : 'key -> 'key -> int
   ; compare : 'key Tree.compare
   ; tree : ('key, 'a) Tree.t

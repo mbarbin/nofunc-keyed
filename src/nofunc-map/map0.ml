@@ -6,18 +6,23 @@
 
 module type OrderedType = sig
   type t
+  type comparator_witness
 
   val compare : t -> t -> Ordering.t
 end
 
 module Tree = Nofunc_map_stdlib.Map0
 
-type ('key, !+'a) t =
+type (!'key, !+'a, !'cmp) t =
   { compare : 'key Tree.compare
   ; tree : ('key, 'a) Tree.t
   }
 
-let empty (type key) (module Ord : OrderedType with type t = key) =
+let empty
+      (type key cmp)
+      (module Ord : OrderedType with type t = key and type comparator_witness = cmp)
+  : (key, 'a, cmp) t
+  =
   { compare = Ord.compare; tree = Tree.empty }
 ;;
 
@@ -30,7 +35,13 @@ let add_to_list t ~key ~data =
 
 let update t key ~f = with_tree t (Tree.update ~compare:t.compare key f t.tree)
 
-let singleton (type key) (module Ord : OrderedType with type t = key) ~key ~data =
+let singleton
+      (type key cmp)
+      (module Ord : OrderedType with type t = key and type comparator_witness = cmp)
+      ~key
+      ~data
+  : (key, 'a, cmp) t
+  =
   { compare = Ord.compare; tree = Tree.singleton key data }
 ;;
 
@@ -130,7 +141,12 @@ let for_all t ~f = Tree.for_all (fun key data -> f ~key ~data) t.tree
 let exists t ~f = Tree.exists (fun key data -> f ~key ~data) t.tree
 let to_list = bindings
 
-let of_list (type key) (module Ord : OrderedType with type t = key) bs =
+let of_list
+      (type key cmp)
+      (module Ord : OrderedType with type t = key and type comparator_witness = cmp)
+      bs
+  : (key, 'a, cmp) t
+  =
   { compare = Ord.compare; tree = Tree.of_list ~compare:Ord.compare bs }
 ;;
 
@@ -139,15 +155,21 @@ let to_rev_seq t = Tree.to_rev_seq t.tree
 let to_seq_from t key = Tree.to_seq_from ~compare:t.compare key t.tree
 let add_seq t seq = with_tree t (Tree.add_seq ~compare:t.compare seq t.tree)
 
-let of_seq (type key) (module Ord : OrderedType with type t = key) seq =
+let of_seq
+      (type key cmp)
+      (module Ord : OrderedType with type t = key and type comparator_witness = cmp)
+      seq
+  : (key, 'a, cmp) t
+  =
   { compare = Ord.compare; tree = Tree.of_seq ~compare:Ord.compare seq }
 ;;
 
 module M (T : sig
     type t
+    type comparator_witness
   end) =
 struct
-  type nonrec 'a t = (T.t, 'a) t
+  type nonrec 'a t = (T.t, 'a, T.comparator_witness) t
 end
 
 module type Sexpable = sig

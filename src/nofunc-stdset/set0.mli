@@ -59,7 +59,7 @@ end
 (** {1:sets Sets} *)
 
 (** The type of sets of elements of type ['elt]. *)
-type 'elt t
+type !'elt t
 
 (** [empty (module Ord)] returns an empty set using [Ord.compare] for ordering. *)
 val empty : (module OrderedType with type t = 'elt) -> 'elt t

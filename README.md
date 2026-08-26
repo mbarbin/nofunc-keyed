@@ -26,7 +26,7 @@ let (s : Int_set.t) = Int_set.of_list [ 1; 2; 3 ]
 
 **Nofunc (this project)**:
 ```ocaml
-module Set = Nofunc_set.Set
+module Set = Nofunc_stdset.Set
 let (s : int Set.t) = Set.of_list (module Int) [ 1; 2; 3 ]
 ```
 

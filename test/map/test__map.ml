@@ -13,6 +13,7 @@ module Map = Nofunc_map.Map
 
 module Int = struct
   type t = int
+  type comparator_witness
 
   let compare (a : int) (b : int) = Ordering.of_int (Stdlib.compare a b)
 end
@@ -240,8 +241,13 @@ let%expect_test "to_seq / to_rev_seq / to_seq_from / add_seq / of_seq" =
 ;;
 
 let%expect_test "different compare functions" =
+  (* [Int_rev] shares [Int]'s [comparator_witness], to demonstrate that the
+     runtime check still catches the mismatch even when the compiler cannot:
+     it is the responsibility of a comparator author not to claim an existing
+     witness unless it is genuinely interchangeable. *)
   let module Int_rev = struct
     type t = int
+    type comparator_witness = Int.comparator_witness
 
     let compare a b = Ordering.reverse Int.compare a b
   end
