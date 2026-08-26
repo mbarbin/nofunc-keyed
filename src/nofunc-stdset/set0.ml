@@ -12,7 +12,7 @@ end
 
 module Tree = Nofunc_set_stdlib.Set0
 
-type 'elt t =
+type !'elt t =
   { compare_int : 'elt -> 'elt -> int
   ; compare : 'elt Tree.compare
   ; tree : 'elt Tree.t

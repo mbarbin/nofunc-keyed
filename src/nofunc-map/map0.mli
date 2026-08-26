@@ -90,7 +90,7 @@ end
 
 (** The type of maps from type ['key] to type ['a], built using a comparison
     function witnessed by ['cmp]. *)
-type (!'key, !+'a, 'cmp) t
+type (!'key, !+'a, !'cmp) t
 
 (** [empty (module Ord)] returns an empty map using [Ord.compare] for key
     ordering. *)

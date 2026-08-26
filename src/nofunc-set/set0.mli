@@ -86,7 +86,7 @@ end
 
 (** The type of sets of elements of type ['elt], built using a comparison
     function witnessed by ['cmp]. *)
-type ('elt, 'cmp) t
+type (!'elt, !'cmp) t
 
 (** [empty (module Ord)] returns an empty set using [Ord.compare] for ordering. *)
 val empty

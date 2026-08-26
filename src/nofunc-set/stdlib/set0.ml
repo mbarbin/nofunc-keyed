@@ -54,7 +54,7 @@ let compare = `shadow_stdlib_compare
 let _ = compare
 
 type 'elt compare = 'elt -> 'elt -> Ordering.t
-type 'elt t = Empty | Node of { l : 'elt t; v : 'elt; r : 'elt t; h : int }
+type !'elt t = Empty | Node of { l : 'elt t; v : 'elt; r : 'elt t; h : int }
 
 (* Sets are represented by balanced binary trees (the heights of the children
    differ by at most 2 *)

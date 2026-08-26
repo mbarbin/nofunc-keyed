@@ -13,7 +13,7 @@ end
 
 module Tree = Nofunc_set_stdlib.Set0
 
-type ('elt, 'cmp) t =
+type (!'elt, !'cmp) t =
   { compare : 'elt Tree.compare
   ; tree : 'elt Tree.t
   }

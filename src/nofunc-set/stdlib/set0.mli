@@ -50,7 +50,7 @@ type 'elt compare = 'elt -> 'elt -> Ordering.t
     [e2] are equal, [f e1 e2] is [Ordering.Lt] if [e1] is smaller than [e2], and
     [f e1 e2] is [Ordering.Gt] if [e1] is greater than [e2]. *)
 
-type 'elt t
+type !'elt t
 (** The type of sets of elements of type ['elt]. *)
 
 val empty : 'elt t
