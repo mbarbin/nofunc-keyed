@@ -75,7 +75,12 @@ module type OrderedType = sig
       meant to be used as distinct comparators should each declare their own
       abstract [comparator_witness]; modules that are happy to be considered
       interchangeable (e.g. because one is a thin wrapper around another) may
-      share the same one. *)
+      share the same one. Sharing a witness between modules whose [compare]
+      functions don't actually agree is not caught by the type system: it is
+      the responsibility of the comparator author not to claim an existing
+      witness unless the two are genuinely interchangeable. The runtime
+      physical-equality check on [compare] (see above) remains the backstop
+      that catches such a mismatch, raising [Invalid_argument]. *)
   type comparator_witness
 
   (** A total ordering function over the set elements. *)
